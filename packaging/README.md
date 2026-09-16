@@ -116,8 +116,8 @@ and these are *identical* to it.
 
 | Secret | Needed by | Notes |
 |---|---|---|
-| `HOMEBREW_TAP_TOKEN` | Homebrew cask | Write access to `GurdyAI/homebrew-tap`, which `GITHUB_TOKEN` cannot grant. The tap repo must exist first. |
-| *(none)* | npm | **Trusted Publishing** — all six `@gurdy` packages trust `GurdyAI/gurdy` + workflow `release.yml`, no environment. Needs npm >= 11.5.1 and Node >= 22.14.0, hence Node 24 plus an explicit npm upgrade in the job. |
+| `HOMEBREW_TAP_TOKEN` | Homebrew cask | Write access to `deterministic-systems-lab/homebrew-tap`, which `GITHUB_TOKEN` cannot grant. The tap repo must exist first. |
+| *(none)* | npm | **Trusted Publishing** — all six `@gurdy` packages trust `deterministic-systems-lab/gurdy` + workflow `release.yml`, no environment. Needs npm >= 11.5.1 and Node >= 22.14.0, hence Node 24 plus an explicit npm upgrade in the job. |
 | *(none)* | PyPI | **Trusted Publishing** — PyPI verifies this workflow's GitHub OIDC identity instead of a token. Configure once at `pypi.org/manage/project/gurdy/settings/publishing/`. |
 
 Neither registry needs a secret, which is worth preferring for the same reason

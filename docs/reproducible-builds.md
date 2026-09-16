@@ -21,7 +21,7 @@ You need the exact Go toolchain — a different Go version produces a different
 binary, and it is the most common reason a reproduction attempt fails.
 
 ```bash
-git clone https://github.com/GurdyAI/gurdy && cd gurdy
+git clone https://github.com/deterministic-systems-lab/gurdy && cd gurdy
 git checkout v0.1.0                      # the tag you are checking
 
 grep '^go ' proxy/go.mod                 # use exactly this Go version
@@ -115,7 +115,7 @@ can only deny.
 cosign verify-blob \
   --certificate checksums.txt.pem \
   --signature checksums.txt.sig \
-  --certificate-identity-regexp 'https://github.com/GurdyAI/gurdy/.*' \
+  --certificate-identity-regexp 'https://github.com/deterministic-systems-lab/gurdy/.*' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   checksums.txt
 

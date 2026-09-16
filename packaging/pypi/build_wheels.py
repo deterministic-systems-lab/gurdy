@@ -73,7 +73,7 @@ def metadata(version: str) -> str:
         "Name: gurdy\n"
         f"Version: {version}\n"
         "Summary: A flight recorder for AI agents — governs agent tool calls and writes a verifiable decision ledger\n"
-        "Home-page: https://github.com/GurdyAI/gurdy\n"
+        "Home-page: https://github.com/deterministic-systems-lab/gurdy\n"
         "License: Apache-2.0\n"
         "Requires-Python: >=3.11\n"
         "Classifier: License :: OSI Approved :: Apache Software License\n"

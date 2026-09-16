@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/GurdyAI/gurdy/proxy/internal/ledger"
-	"github.com/GurdyAI/gurdy/proxy/internal/policy"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/ledger"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/policy"
 )
 
 // The Act stage of the governance loop (§4.2), as an interface with exactly one

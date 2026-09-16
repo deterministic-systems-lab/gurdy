@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/GurdyAI/gurdy/proxy/internal/keyfile"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/keyfile"
 	"github.com/golang-jwt/jwt/v5"
 )
 

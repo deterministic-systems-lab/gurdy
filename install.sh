@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # Install gurdy-proxy and gurdy-verify.
 #
-#   curl -fsSL https://raw.githubusercontent.com/GurdyAI/gurdy/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/deterministic-systems-lab/gurdy/main/install.sh | sh
 #
 # It verifies the SHA-256 of what it downloaded before installing anything, and
 # it verifies the cosign signature too when cosign is present. That is not
@@ -13,7 +13,7 @@
 # the end of this script.
 set -eu
 
-REPO="GurdyAI/gurdy"
+REPO="deterministic-systems-lab/gurdy"
 BIN_DIR="${GURDY_BIN_DIR:-/usr/local/bin}"
 VERSION="${GURDY_VERSION:-latest}"
 
@@ -94,7 +94,7 @@ else
   # the checksum alongside it. Only the signature establishes origin.
   say "  note: checksum verified (integrity), but NOT origin — the checksum file"
   say "        comes from the same place as the archive. Install cosign and re-run"
-  say "        to verify this was built by the GurdyAI release workflow."
+  say "        to verify this was built by the Gurdy release workflow."
 fi
 
 tar -xzf "$tmp/$archive" -C "$tmp"

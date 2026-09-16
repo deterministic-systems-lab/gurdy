@@ -16,7 +16,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/GurdyAI/gurdy/proxy/internal/ledger"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/ledger"
 )
 
 // writeLedger produces a real signed export: n decisions across the named

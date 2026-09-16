@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "description": "Provenance enrichment for governed agent traffic \u2014 the on-ramp to gurdy-proxy.",
   "license": "Apache-2.0",
-  "repository": { "type": "git", "url": "git+https://github.com/GurdyAI/gurdy.git", "directory": "sdk/typescript" },
-  "homepage": "https://github.com/GurdyAI/gurdy/tree/main/sdk/typescript",
+  "repository": { "type": "git", "url": "git+https://github.com/deterministic-systems-lab/gurdy.git", "directory": "sdk/typescript" },
+  "homepage": "https://github.com/deterministic-systems-lab/gurdy/tree/main/sdk/typescript",
   "keywords": ["mcp", "ai-agents", "governance", "audit", "provenance"],
   "type": "module",
   "engines": {

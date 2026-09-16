@@ -1,4 +1,4 @@
-module github.com/GurdyAI/gurdy/proxy
+module github.com/deterministic-systems-lab/gurdy/proxy
 
 go 1.26.5
 

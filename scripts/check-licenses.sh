@@ -34,7 +34,7 @@ unrecognised=()
 # `go list -deps` is the set actually linked, which is the set that matters.
 # `go list -m all` would also drag in test-only and indirect modules that never
 # reach a shipped binary, and failing the build over those would be wrong.
-mods=$(go list -deps -f '{{if not .Standard}}{{.Module.Path}}{{end}}' ./... | sort -u | grep -v '^$' | grep -v '^github.com/GurdyAI/')
+mods=$(go list -deps -f '{{if not .Standard}}{{.Module.Path}}{{end}}' ./... | sort -u | grep -v '^$' | grep -v '^github.com/deterministic-systems-lab/')
 
 for m in $mods; do
   dir=$(go list -m -f '{{.Dir}}' "$m" 2>/dev/null || true)

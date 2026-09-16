@@ -18,13 +18,16 @@ That line certifies you wrote the patch, or have the right to submit it. The
 full text is in [`DCO`](DCO) and CI checks for it on every pull request.
 
 **What that means for your code, stated plainly:** contributions are licensed
-under Apache-2.0 like the rest of this repository, and **they stay in the open
-half.** Gurdy is open-core — there is a separate proprietary repository for
-`gurdy-fleet` and the paid policy packs — and a DCO gives us no right to
-relicense your work into it, which is deliberate. We chose a DCO over a CLA
-*because* we do not intend to move contributed code into the paid product. If
-that ever changed we would need your explicit permission, per contributor, per
-patch. See [`NOTICE`](NOTICE) for exactly where the line sits.
+under Apache-2.0 like the rest of this repository, and that is the whole of it.
+
+This promise used to need a paragraph of qualification. Gurdy was planned as
+open core, with a paid fleet tier in a separate proprietary repository, and the
+DCO was chosen over a CLA *because* a CLA's one real power — relicensing your
+work into the closed half — was a power we had decided not to use. **As of
+2026-09-16 there is no closed half.** Gurdy is entirely open source, so the
+question a CLA would have answered cannot arise, and the DCO is simply the
+lighter instrument. Nothing about your rights got narrower; the thing that
+could have narrowed them stopped existing.
 
 Issues, discussions and security reports need no sign-off — see
 [SECURITY.md](SECURITY.md) for the latter.

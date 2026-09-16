@@ -1,4 +1,4 @@
-# gurdy-report — the free-tier local governance report
+# gurdy-report — the local governance report
 
 Compiles a Gurdy decision ledger into an artifact a security owner can hand to a
 reviewer (BR-11, §5.6). Markdown for a person, JSON for a tool.
@@ -73,13 +73,14 @@ and that difference is the entire value of the artifact.
   key comes from the export itself, so an attacker who rewrote the file could
   embed their own. The report flags this.
 
-## Not in the free tier
+## Not built
 
 Control-framework mapping (NIST AI RMF / ISO 42001 / HIPAA), violation narratives
 with remediation, HTML/PDF, and the period-over-period dashboard. Those need
-`control_map.yaml` from the pack registry (§5.4, BR-4) and are the paid artifact
-(§5.6). This one deliberately stops at "what happened, what was flagged, and what
-this export cannot tell you."
+`control_map.yaml` from the pack registry (§5.4, BR-4), which has no owner or
+date. They were once the paid artifact (§5.6); they are now unbuilt, and will be
+Apache-2.0 here when they exist. This report deliberately stops at "what
+happened, what was flagged, and what this export cannot tell you."
 
 ## Development
 

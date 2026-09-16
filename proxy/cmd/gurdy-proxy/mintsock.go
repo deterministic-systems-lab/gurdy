@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/GurdyAI/gurdy/proxy/internal/policy"
-	"github.com/GurdyAI/gurdy/proxy/internal/tis"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/policy"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/tis"
 )
 
 // The sideband TIS API (D1, §5.9): root mint and child derive, and nothing

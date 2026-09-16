@@ -9,6 +9,60 @@ it starts, and from the flip onward it is the *only* narrative of the build that
 
 ---
 
+## 2026-09-16 — no paid tier, and a new home
+
+Two changes, and only one of them is mechanical.
+
+**Gurdy is entirely open source.** The open-core plan is abandoned: no paid tier, no proprietary
+component, no second repository. What that touched was never a find-and-replace, because the
+business model was load-bearing in the spec — ADR-14 *was* the paywall ("the capability is free;
+the coordination is paid"), cited from §0, FR-5, NFR-1, §4.4's topology table and ADR-11's
+amendment.
+
+**ADR-14 is marked SUPERSEDED rather than deleted**, and §0 now opens by saying the commercial half
+is gone instead of saying its rationale is held back. A decision record that quietly loses its
+losing options stops being a record — and more practically, code comments cite these IDs, so a
+deleted ADR leaves `(ADR-14)` in the tree pointing at nothing. What survives from it is the half
+that was about capability rather than price: local single-instance enforcement is still Phase 2,
+exactly as scheduled. **The pivot removed a paywall, not a milestone.**
+
+`gurdy-fleet` stops being a separate proprietary product and becomes an ordinary unbuilt roadmap
+item. The observation that made it a weak commercial boundary in the first place — fleet
+coordination is rebuildable work — is exactly what makes it an unremarkable open-source feature.
+
+**`NOTICE` was the urgent file**, because it was the one making a legally meaningful false
+statement: it listed components "NOT covered by this licence" that no longer exist as a category.
+Rewritten to say the exclusions are void and to name the two things people may remember as paid —
+fleet coordination and the framework-mapped evidence report — as *unbuilt, not withheld*.
+`CONTRIBUTING.md` needed the inverse repair: its DCO-over-CLA reasoning turned on "we do not intend
+to move contributed code into the paid product", which now has no product to refer to. The promise
+did not weaken; the thing that could have weakened it stopped existing.
+
+**Copyright moved from `GurdyAI` to `The Gurdy Authors`** in `LICENSE` and `NOTICE`. Flagged rather
+than assumed — it is a legal attribution and the author's to confirm.
+
+**The move: a copy, not a transfer.** `GurdyAI` is left untouched and will be made private. That is
+the decision with a consequence worth writing down: **a transfer redirects, a copy does not, and a
+private repo redirects nothing.** The published v0.1.0 artifacts are served from
+`github.com/GurdyAI/gurdy/releases/...` — the Homebrew cask's URLs, `install.sh`'s raw fetches, and
+npm's provenance link all point there. The day that repo goes private, every one of those 404s.
+Nothing is corrupted and no signature stops verifying, but the installers break, so a release from
+the new home has to follow promptly rather than eventually.
+
+**The module path moved with the code**: `github.com/GurdyAI/gurdy/proxy` →
+`github.com/deterministic-systems-lab/gurdy/proxy`, 31 imports across 14 files. The one that would
+have broken CI silently is in `scripts/check-licenses.sh`, which filters the project's own module
+out of the dependency licence scan by prefix — left alone, it would have started auditing Gurdy as
+a third-party dependency of itself.
+
+**What was deliberately *not* rewritten: this file, and the roadmap's completed items.** They say
+`GurdyAI/gurdy` in a dozen places and every one of them is a statement about what was true on the
+day it was written. Blanket-replacing them would make the log lie about its own history — including
+the 2026-08-11 entry explaining why the slug mattered, which is the entry that predicted today's
+npm re-point. Live pointers were updated; the record was not.
+
+---
+
 ## 2026-08-16 — the deployment keyring: two keys, one interval, and a scope split
 
 §5.2's rotation line and §5.5's `kid` were written for each other — the ledger field landed early
@@ -215,7 +269,7 @@ The hooks without the incident are two unexplained deny-lists. **Deliberately ke
 split, and worth restating here:** the free-versus-paid boundary in `spec.md` §5.8 and ADR-14. What is
 free is a user-facing fact; only the reasoning behind the pricing is private.
 
-**Same day — the tap, and the last long-lived credential.** `GurdyAI/homebrew-tap` created, public,
+**Same day — the tap, and the last long-lived credential.** `deterministic-systems-lab/homebrew-tap` created, public,
 with a README pushed rather than left empty: GoReleaser needs a default branch to publish
 `Casks/gurdy.rb` into, and an empty tap for an unnotarized security tool raises a question it then
 fails to answer. The README answers it — Homebrew *formulae* are Gatekeeper-exempt and casks are

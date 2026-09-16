@@ -37,10 +37,10 @@ builds:
     mod_timestamp: "{{ .CommitTimestamp }}"
     ldflags: &ldflags
       - -s -w
-      - -X github.com/GurdyAI/gurdy/proxy/internal/version.version={{ .Version }}
-      - -X github.com/GurdyAI/gurdy/proxy/internal/version.commit={{ .FullCommit }}
+      - -X github.com/deterministic-systems-lab/gurdy/proxy/internal/version.version={{ .Version }}
+      - -X github.com/deterministic-systems-lab/gurdy/proxy/internal/version.commit={{ .FullCommit }}
       # .CommitDate, never .Date — see the header.
-      - -X github.com/GurdyAI/gurdy/proxy/internal/version.date={{ .CommitDate }}
+      - -X github.com/deterministic-systems-lab/gurdy/proxy/internal/version.date={{ .CommitDate }}
 
   - id: gurdy-verify
     dir: proxy
@@ -82,7 +82,7 @@ signs:
   #
   # Verify a download with:
   #   cosign verify-blob --certificate <file>.pem --signature <file>.sig \
-  #     --certificate-identity-regexp 'https://github.com/GurdyAI/gurdy/.*' \
+  #     --certificate-identity-regexp 'https://github.com/deterministic-systems-lab/gurdy/.*' \
   #     --certificate-oidc-issuer https://token.actions.githubusercontent.com <file>
   - cmd: cosign
     signature: "${artifact}.sig"
@@ -110,11 +110,11 @@ homebrew_casks:
     ids: [default]
     binaries: [gurdy-proxy, gurdy-verify]
     repository:
-      owner: GurdyAI
+      owner: deterministic-systems-lab
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     directory: Casks
-    homepage: https://github.com/GurdyAI/gurdy
+    homepage: https://github.com/deterministic-systems-lab/gurdy
     description: A flight recorder for AI agents — governs agent tool calls and writes a verifiable decision ledger
     license: Apache-2.0
     hooks:
@@ -141,7 +141,7 @@ release:
 
     ```bash
     cosign verify-blob --certificate checksums.txt.pem --signature checksums.txt.sig \
-      --certificate-identity-regexp 'https://github.com/GurdyAI/gurdy/.*' \
+      --certificate-identity-regexp 'https://github.com/deterministic-systems-lab/gurdy/.*' \
       --certificate-oidc-issuer https://token.actions.githubusercontent.com \
       checksums.txt
     sha256sum -c checksums.txt --ignore-missing
@@ -149,7 +149,7 @@ release:
 
     **Or rebuild it yourself.** `gurdy-verify` is the tool you would use to check
     evidence you do not trust, so you should not have to trust our build of it
-    either. See [docs/reproducible-builds.md](https://github.com/GurdyAI/gurdy/blob/main/docs/reproducible-builds.md)
+    either. See [docs/reproducible-builds.md](https://github.com/deterministic-systems-lab/gurdy/blob/main/docs/reproducible-builds.md)
     — the binaries are byte-for-byte reproducible from this tag.
 
 changelog:

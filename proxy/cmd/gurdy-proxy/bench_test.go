@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/GurdyAI/gurdy/proxy/internal/extract"
-	"github.com/GurdyAI/gurdy/proxy/internal/tis"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/extract"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/tis"
 )
 
 // The per-call hot path, benchmarked as the proxy actually runs it.

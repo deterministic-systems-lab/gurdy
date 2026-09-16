@@ -18,9 +18,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/GurdyAI/gurdy/proxy/internal/ledger"
-	"github.com/GurdyAI/gurdy/proxy/internal/policy"
-	"github.com/GurdyAI/gurdy/proxy/internal/tis"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/ledger"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/policy"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/tis"
 	"go.opentelemetry.io/otel"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"

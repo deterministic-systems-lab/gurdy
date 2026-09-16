@@ -31,7 +31,7 @@ function binaryPath(name) {
     throw new Error(
       `gurdy: unsupported platform ${key}.\n` +
         `Supported: ${Object.keys(PLATFORMS).join(", ")}.\n` +
-        `Windows is Phase 2; WSL2 works today. Build from source: https://github.com/GurdyAI/gurdy`
+        `Windows is Phase 2; WSL2 works today. Build from source: https://github.com/deterministic-systems-lab/gurdy`
     );
   }
   const pkg = `@gurdy/cli-${slug}`;

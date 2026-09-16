@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/GurdyAI/gurdy/proxy/internal/extract"
-	"github.com/GurdyAI/gurdy/proxy/internal/ledger"
-	"github.com/GurdyAI/gurdy/proxy/internal/mcp"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/extract"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/ledger"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/mcp"
 )
 
 // runShim wraps an MCP stdio server (§4.4 stdio shim): spawns argv, relays

@@ -1,7 +1,7 @@
 Gurdy — runtime governance for AI agents
-Copyright 2026 GurdyAI
+Copyright 2026 The Gurdy Authors
 
-This product includes software developed at GurdyAI.
+This product includes software developed as part of the Gurdy project.
 
 Licensed under the Apache License, Version 2.0 (see LICENSE).
 
@@ -14,25 +14,27 @@ Everything in this repository is Apache-2.0. Per ADR-13 the grant boundary is
 drawn at the **repository**, not file by file, so no directory here is carved
 out and nothing here needs a per-file licence header to be covered.
 
-What that includes (ADR-8, ADR-13):
+Until 2026-09-16 this file also listed components that were *excluded* from the
+grant, because Gurdy was planned as an open core with a paid fleet tier. **That
+plan was abandoned and there are no excluded components.** Gurdy is entirely
+open source. Nothing is withheld, nothing is distributed from a second
+repository, and no capability is reserved for a paid build.
+
+The list below is therefore descriptive rather than a boundary — it is what is
+here, not what is permitted:
 
   - gurdy-proxy       interceptor proxy and the monitor actuator; the
                       local single-instance enforce actuator when it ships
-                      (ADR-14 — it is not implemented today)
+                      (Phase 2 — it is not implemented today)
   - gurdy-verify      offline ledger verifier
   - the Transaction Identity Service, policy host, and decision ledger
-  - the free starter policy set, and the adversarial corpus that gates it
+  - the starter policy set, and the adversarial corpus that gates it
   - the Gurdy SDKs (Python, TypeScript) and the shared conformance suite
-  - gurdy-report, the free-tier local mini-report (BR-11)
+  - gurdy-report, the local report (BR-11)
 
-Proprietary Gurdy components are distributed from a separate repository and
-are NOT covered by this licence: gurdy-fleet (central ledger, fleet policy
-distribution, fleet enforcement rollout/rollback, central attestation, SSO),
-the agent-security and ai-governance policy packs, vertical packs, and the
-**framework-mapped evidence reporter** (§5.6/FR-8 — the one that maps
-decisions to NIST AI RMF / ISO 42001 / EU AI Act controls).
-
-Note the reporter split, because the spec uses one word for two things. The
-local mini-report in `reporter/` is free and is covered by this grant. The
-framework-mapped evidence report is the paid artifact and is not in this
-repository at all.
+Two things the old text named as paid, for anyone who read this file before:
+fleet coordination (central ledger, fleet policy distribution, fleet-wide
+rollout and rollback, central attestation) and the framework-mapped evidence
+report that maps decisions to NIST AI RMF / ISO 42001 / EU AI Act controls.
+Neither is withheld. Both are simply **unbuilt**, tracked in docs/roadmap.md,
+and will be Apache-2.0 here when they exist.

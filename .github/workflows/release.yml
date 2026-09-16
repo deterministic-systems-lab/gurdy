@@ -85,7 +85,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Publishing the Homebrew cask needs write access to a *different*
-          # repo (GurdyAI/homebrew-tap), which GITHUB_TOKEN cannot grant.
+          # repo (deterministic-systems-lab/homebrew-tap), which GITHUB_TOKEN cannot grant.
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
       # Handed to verify-reproducible rather than re-downloaded from the
@@ -118,7 +118,7 @@ jobs:
       # anywhere in this job — npm verifies this workflow's GitHub identity
       # instead, the same argument as cosign keyless and PyPI Trusted
       # Publishing. All six packages are configured to trust
-      # `GurdyAI/gurdy` + `release.yml`, so a publish from any other workflow,
+      # `deterministic-systems-lab/gurdy` + `release.yml`, so a publish from any other workflow,
       # repo, or fork is rejected by the registry rather than by our discipline.
       id-token: write
     steps:

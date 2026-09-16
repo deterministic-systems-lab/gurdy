@@ -33,7 +33,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GurdyAI/gurdy/proxy/internal/ledger"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/ledger"
 )
 
 // Case is one conformance scenario. Steps describe what the SDK must do;

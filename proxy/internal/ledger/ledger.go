@@ -33,7 +33,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/GurdyAI/gurdy/proxy/internal/keyfile"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/keyfile"
 )
 
 const (

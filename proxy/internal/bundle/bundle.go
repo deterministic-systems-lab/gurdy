@@ -20,7 +20,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/GurdyAI/gurdy/proxy/internal/policy"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/policy"
 )
 
 // Manifest identifies a pack (§5.3 pack manifest, minimal cut).

@@ -17,8 +17,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/GurdyAI/gurdy/proxy/internal/ledger"
-	"github.com/GurdyAI/gurdy/proxy/internal/version"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/ledger"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/version"
 )
 
 func main() { os.Exit(run(os.Args[1:], os.Stdout, os.Stderr)) }

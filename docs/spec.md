@@ -20,25 +20,38 @@ follow.
 
 ## 0. Referenced elsewhere
 
-Code and docs cite a handful of requirements and decisions whose full reasoning
-is commercial. Their operative content is stated here in full; only the
-rationale is held back.
+Code comments cite requirement and decision IDs by number. They are listed here
+so every `(BR-11)` or `(ADR-14)` in the tree resolves to something.
+
+**Gurdy is entirely open source (2026-09-16).** There is no paid tier, no
+proprietary component, and no held-back rationale. The entries below were
+written when there was a commercial half, and are kept — corrected, not deleted
+— because the code cites them and because a decision record that quietly loses
+its losing options is not a record.
 
 - **BR-5 — every decision must be independently verifiable.** Signed,
   hash-chained, exportable, and checkable by a third party with nothing but the
   export and `gurdy-verify`. This is the requirement §5.5 exists to satisfy.
-- **BR-11 — the free tier must stand alone.** A local flight recorder for agent
-  tool calls that is useful to a developer with no compliance obligation at all:
-  local ledger, local verification, local report, bundled starter policies, and
-  local blocking. No account, no egress.
-- **ADR-13 — Apache-2.0 for all open-source components.** The grant boundary is
-  drawn at the repository, not argued file-by-file; proprietary artifacts live
-  in a separate repository.
-- **ADR-14 — local, single-instance enforcement is free and open-source.** The
-  paid boundary is *fleet* scale — central ledger, fleet policy distribution,
-  fleet-wide rollout and rollback — delivered as the separately-distributed
-  `gurdy-fleet`. The capability is free; the coordination is paid. ADR-3's
-  monitor-first posture is unchanged and remains the recommendation.
+- **BR-11 — the local install must stand alone.** A local flight recorder for
+  agent tool calls that is useful to a developer with no compliance obligation
+  at all: local ledger, local verification, local report, bundled starter
+  policies, and local blocking. No account, no egress. **It said "the free tier"
+  and now describes the whole product**, which changes nothing about what it
+  requires — the standard it set was always "useful with no account", and that
+  standard is why the local path is the good one rather than the demo.
+- **ADR-13 — Apache-2.0, everything.** The grant boundary is drawn at the
+  repository, not argued file-by-file. **The clause about proprietary artifacts
+  living in a separate repository is void**: there are none. Apache-2.0 on the
+  whole tree is the entirety of the licensing position.
+- **ADR-14 — SUPERSEDED 2026-09-16.** It drew the paid boundary at *fleet*
+  scale: local enforcement free, fleet coordination sold as a separate
+  `gurdy-fleet`. There is no paid boundary now, so the distinction it existed to
+  draw is gone. **What survives is the half that was about capability rather
+  than price:** local single-instance enforcement is in this repository and is
+  Phase 2 work, exactly as scheduled — the pivot removed a paywall, not a
+  milestone. Fleet coordination is now an ordinary unbuilt roadmap item
+  (§3.F/Phase 3) rather than a separate product. ADR-3's monitor-first posture
+  is untouched and remains the recommendation.
 
 ---
 
@@ -65,7 +78,7 @@ rationale is held back.
 
 | ID | Category | Requirement |
 |---|---|---|
-| NFR-1 | Latency | **Now binds the free tier** — since local enforcement is OSS (ADR-14), the enforcement-path budget is a free-tier release gate, not only a paid-deployment one. **Sidecar/tap (guaranteed):** ≤3ms p50 / ≤5ms p99 added per call on the enforcement path; ≤0.5ms tap-mode overhead. **In-cluster reverse proxy (measured, best-effort — not gated):** reported per release; the extra pod-to-pod hop consumes most of the p99 budget. Per-call hot path = hop + derive + extract + eval; **mint is per-task and amortized, not per-call**. Composed p99 is measured under concurrency in the reverse-proxy topology (§8.2), never inferred by summing standalone microbenchmarks |
+| NFR-1 | Latency | **Binds every install** — local enforcement ships in this repository, so the enforcement-path budget is a release gate for the only thing there is. **Sidecar/tap (guaranteed):** ≤3ms p50 / ≤5ms p99 added per call on the enforcement path; ≤0.5ms tap-mode overhead. **In-cluster reverse proxy (measured, best-effort — not gated):** reported per release; the extra pod-to-pod hop consumes most of the p99 budget. Per-call hot path = hop + derive + extract + eval; **mint is per-task and amortized, not per-call**. Composed p99 is measured under concurrency in the reverse-proxy topology (§8.2), never inferred by summing standalone microbenchmarks |
 | NFR-2 | Throughput | Sustain 1,000 decisions/sec per proxy instance (≈10× projected 50-agent fleet load) |
 | NFR-3 | Availability | Proxy stateless & horizontally scalable; no central synchronous chokepoint; monitor mode fails open by definition |
 | NFR-4 | Integrity | Ledger tamper-evidence verifiable offline by third party from export alone |
@@ -149,7 +162,7 @@ Every intercepted call passes through five stages; this loop is the conceptual s
 | Topology | When | Latency | Notes |
 |---|---|---|---|
 | **Inline sidecar, monitor mode** | **Default** for partners with any enforcement intent | ~0.1–0.5ms hop | In the request path but pass-through + annotate; 100% capture fidelity. Same observability as tap, but graduating to enforce is a per-policy **config flip** (§8.4), *not* a topology change. Fails open on crash (NFR-3) |
-| Inline sidecar, enforce mode | After monitoring earns trust; **no paid component required for a single instance** (ADR-14) | ~0.1–0.5ms hop | Destination posture; per-policy staged rollout. Coordinating that rollout *across a fleet* — staged graduation, fleet-wide rollback, central attestation of what was in force where — is `gurdy-fleet` |
+| Inline sidecar, enforce mode | After monitoring earns trust; nothing extra to install for a single instance | ~0.1–0.5ms hop | Destination posture; per-policy staged rollout. Coordinating that rollout *across a fleet* — staged graduation, fleet-wide rollback, central attestation of what was in force where — is **not built yet** (§5.8) |
 | In-cluster reverse proxy | Simpler estates; shared proxy | 1–2ms hop | Single Deployment; HPA on RPS; the extra hop makes NFR-1 best-effort, not guaranteed (§3.2) |
 | Passive tap (traffic mirror) | Path-averse estates; monitor-only / never-enforce buyers | ~0 | A *copy* of traffic — **cannot ever enforce** (physics, not config). Capture is best-effort (≤99.5%, §8.3). **Tap→enforce is a topology migration** (reroute + fresh security review + change window), not a flag flip — budget it as a distinct trust milestone. First-class for the strictest estates |
 | stdio shim | Local/desktop MCP servers | ~0 | Wraps MCP server process; dev & demo mode |
@@ -175,7 +188,7 @@ Every intercepted call passes through five stages; this loop is the conceptual s
 - Bounded decision queue: on overflow, monitor mode drops-with-counter (never blocks traffic); enforce mode applies per-policy fail mode
 - Config: single YAML; hot-reload via SIGHUP/admin API
 - **Enforcement actuator is a plugin interface (ADR-11, amended by ADR-14):** the PEP calls out to a pluggable actuator. The free OSS base ships **two** actuators: *monitor* (pass-through + annotate, the default) and *local-enforce* (**block only** in v1 — short-circuit the upstream call and return a protocol-level error to the agent). Both are Apache-2.0. Blocking must work on every ingress: the HTTP path short-circuits the reverse proxy, and the **stdio shim synthesizes a JSON-RPC error onto the server's response stream without forwarding to the child**, preserving framing. **Batch semantics are normative:** in a JSON-RPC batch, a blocked call is replaced by an error response element and its siblings are evaluated and forwarded independently — one blocked call never suppresses or silently allows the rest
-- **What `gurdy-fleet` adds (paid, separately distributed):** it does not add the ability to block. It adds *fleet coordination* — staged graduation of a policy across many instances, fleet-wide rollback on false-positive spike, central attestation of which bundle was in force on which instance when, and the central ledger those claims are made against. A fork receives the actuator and not the control plane — but see ADR-14: this is an adoption bet, not an unforkable boundary, since fleet coordination is rebuildable work
+- **What fleet coordination would add, once built:** it does not add the ability to block — that is local and ships here. It adds *coordination* — staged graduation of a policy across many instances, fleet-wide rollback on a false-positive spike, central attestation of which bundle was in force on which instance when, and the central ledger those claims are made against. This was `gurdy-fleet`, the paid component ADR-14 drew the boundary at; it is now an unbuilt roadmap item in this repository (§0, §5.8). The observation that made it a weak boundary in the first place — fleet coordination is rebuildable work — is the same reason it makes a perfectly ordinary open-source feature
 
 **Explicit non-goals:** TLS termination beyond standard mesh patterns; content classification; response streaming transformation (v1 passes streams through, evaluates on request + final response metadata)
 
@@ -224,22 +237,22 @@ Every intercepted call passes through five stages; this loop is the conceptual s
 
 ### 5.4 Policy Packs
 
-Packs are maintained, adversarially-tested, reviewed policy sets. Three tiers of pack, all sharing the §5.3 bundle format and the authoring workflow below.
+Packs are maintained, adversarially-tested, reviewed policy sets, all sharing the §5.3 bundle format and the authoring workflow below. **All of them are Apache-2.0**; the "proprietary" and "paid pack" framing this section used to carry went with ADR-14 (§0). What separates a starter policy from a flagship pack is depth and review, not licence.
 
-**Free starter policies (OSS, bundled with the base):** shallow filesystem / credential / spend protections — the BR-11 flight recorder's defaults. Each declares `on_error` and `enforce_action` like any other policy, so a free-tier user can graduate any of them from flag to local block (ADR-14). These seed the vocabulary; the depth lives in the paid packs.
+**Starter policies (bundled with the binary):** shallow filesystem / credential / spend protections — the BR-11 flight recorder's defaults. Each declares `on_error` and `enforce_action` like any other policy, so any of them can be graduated from flag to local block. These seed the vocabulary; the depth lives in the flagship packs below.
 
-**Flagship pack A — `agent-security` v1 (proprietary, deep) — the entry paid pack**
+**Flagship pack A — `agent-security` v1 (deep)**
 - Cedar policies covering: secret/credential exfiltration (reads of credential paths/env, sends to unlisted hosts), destructive filesystem ops (recursive delete, overwrite outside workspace), unauthorized network egress (host/domain allowlisting), prompt-injection-driven tool abuse (tool-call patterns inconsistent with declared task scope), spend/rate limits per task and per fleet
 - `control_map.yaml`: each policy → a plain-language security-control statement + rationale; reviewed by a security expert (BR-4), not counsel
-- The deep, maintained extension of the free starter policies — this is what a team upgrades to first
+- The deep, maintained extension of the starter policies, and still unbuilt: what ships today is the starter set, and `corpus/` publishes the seven attacks it does not stop
 
-**Flagship pack B — `ai-governance` v1 (proprietary, framework evidence)**
-- Maps decisions to named AI-governance framework controls — **NIST AI RMF, ISO/IEC 42001, EU AI Act** readiness — and drives the internal AI-governance evidence report (§5.6). The buyer is an org standing up an AI-governance program, not a compliance officer
+**Flagship pack B — `ai-governance` v1 (framework evidence)**
+- Maps decisions to named AI-governance framework controls — **NIST AI RMF, ISO/IEC 42001, EU AI Act** readiness — and drives the internal AI-governance evidence report (§5.6). The reader is an org standing up an AI-governance program, not a compliance officer
 - `control_map.yaml`: each policy/decision class → framework control ID + justification; the report is the artifact the org shows its own board/auditor
 
 **Vertical packs (later, per-vertical)**
 - `hipaa-min-necessary-fhir` is the **first example** vertical pack (healthcare), no longer the reference launch pack: patient-compartment scoping (agent task scope ↔ FHIR compartment), resource-type allowlists per task category, bulk-export (`$export`) restrictions, `_include`/chained-search widening detection, 42 CFR Part 2-adjacent sensitive-category flags; `control_map.yaml` → HIPAA Security Rule citations (§164.308(a)(4), §164.312(a)(1), §164.312(b)) + counsel review record (reviewer, date, scope of opinion, open questions)
-- Fintech/SOC2, legal, and others follow the same regimen as design partners materialize; which vertical goes first is partner-driven (OQ #11), not pre-committed
+- Fintech/SOC2, legal, and others follow the same regimen as real users materialize; which vertical goes first is demand-driven, not pre-committed
 
 **Authoring workflow (all packs):** policies as code — PR review, staged rollout (monitor → warn → enforce per policy), regression suite of recorded attack traces. Every pack ships an adversarial test corpus (see §8) and its version gates on corpus pass. Vertical/regulated packs additionally gate on the counsel review record; general packs on security-expert review.
 
@@ -321,12 +334,13 @@ Packs are maintained, adversarially-tested, reviewed policy sets. Three tiers of
 
 ### 5.8 Packaging & install
 
-- **Individual (free tier):** `brew install gurdy` / `npm i -g @gurdy/cli` / `pipx install gurdy` — one static Go binary per platform; fully local: embedded **inline shim** (never a tap — §4.4: a tap cannot enforce, so a tap-shaped dev mode could never deliver BR-11 local blocking), local SQLite ledger, local mini-report, bundled starter policies (filesystem, credential, and spend protections), and the local-enforce actuator (ADR-14). **Retention is manual and included** (author decision 2026-08-10): the local admin API's `POST /retention/prune` is free, because the free tier writes the same ledger at the same rate (D14: ~92 GB/day at NFR-2's rated load) and a user with no supported way to reclaim disk deletes the export by hand, destroying the chain — the exact outcome the signed retention record exists to prevent. What is *not* free is retention as a **policy**: schedules, per-tenant rules and fleet-wide application are `gurdy-fleet`. Same shape as ADR-14 draws for enforcement — the capability is free, the coordination is paid, and requiring a human to ask is the free tier's deliberate friction rather than a limitation. No account, no egress, no telemetry without opt-in
-- **Team/enterprise (paid):** Helm chart (preferred) and Docker Compose profile; single `values.yaml` decision surface: topology (sidecar/proxy/tap), fail modes default, retention **policy** (scheduling and fleet-wide application of the pruning the free tier performs by hand — see the free-tier bullet above), IdP. Paid entitlements are delivered as **proprietary artifacts the customer receives** — central ledger, fleet policy distribution, packs, evidence reporting — not as flags flipped in open code
-- **Fleet governance is a separate install (ADR-14):** `gurdy-fleet` is a distinct, signed, proprietary component delivered only to paid customers, comprising the fleet control plane and the central ledger it attests against. An estate without it can monitor and can block locally, but cannot graduate a policy across a fleet, roll a fleet back, or produce a central attestation of what was in force where. The boundary is *what is distributed*, consistent with ADR-8 — a fork gains the actuator, never the control plane
-- **Licensing (ADR-13):** every OSS artifact above is Apache-2.0. Proprietary artifacts (`gurdy-fleet`, the packs, the evidence reporter) live in a **separate repository** so the Apache grant boundary is unambiguous at the repo level rather than argued file-by-file. `NOTICE` in the OSS repo states the split explicitly
-- **Platform matrix (v1):** macOS (arm64 + x64) and Linux (x64 + arm64) are the supported native targets for the free-tier binary and the SDK-embedded core. **Windows is deferred to Phase 2** — interim guidance is WSL2 (Linux binary) with a documented native-Windows build item; a sizable share of developers (and most enterprise/regulated desktops) run Windows, so this is a known gap tracked in §9, not an oversight
-- Signed images and binaries + SBOM (NFR-9); zero mandatory egress in all tiers (NFR-6). Because the SDK-embedded core ships as a **prebuilt per-platform Go binary inside the wheel/npm package** (§3.3), reproducibility is preserved by building each platform artifact from a pinned toolchain in a hermetic pipeline, publishing a per-artifact SBOM, and recording the embedded binary's content hash in the package manifest — so the core bundled in `pip`/`npm` is byte-for-byte reproducible and independently attestable, not an opaque blob riding inside a language package
+- **Install:** `brew install gurdy` / `npm i -g @gurdy/cli` / `pipx install gurdy` — one static Go binary per platform; fully local: embedded **inline shim** (never a tap — §4.4: a tap cannot enforce, so a tap-shaped dev mode could never deliver BR-11 local blocking), local ledger, local mini-report, bundled starter policies (filesystem, credential, and spend protections), and the local-enforce actuator. No account, no egress, no telemetry without opt-in. **This is the whole product**, not an entry tier of one.
+- **Retention is manual, and still deliberately so** (author decision 2026-08-10, unchanged by the OSS pivot). `POST /retention/prune` on the local admin API. The reasoning never depended on tiers: Gurdy writes ~92 GB/day at NFR-2's rated load (D14), and a user with no supported way to reclaim disk deletes the export by hand and destroys the chain — the exact outcome the signed retention record exists to prevent. Requiring a human to ask is friction on purpose, because a product that deletes its own evidence on a schedule is a harder thing to stand behind than one that does it when asked. Scheduling and fleet-wide application remain **unbuilt**, not withheld
+- **Cluster deployment:** Helm chart (preferred) and Docker Compose profile; single `values.yaml` decision surface: topology (sidecar/proxy/tap), fail modes default, retention policy, IdP. Unbuilt — Phase 2, and now unblocked by nothing but time
+- **Fleet coordination is an unbuilt roadmap item, not a separate product** (supersedes ADR-14's `gurdy-fleet`). Staged graduation of a policy across many instances, fleet-wide rollback on a false-positive spike, and central attestation of which bundle was in force where are all things Gurdy does not do yet. When they are built they land here, Apache-2.0, like everything else
+- **Licensing (ADR-13):** Apache-2.0, whole repository, no exceptions. There is no proprietary half and no second repository to draw a boundary against
+- **Platform matrix (v1):** macOS (arm64 + x64) and Linux (x64 + arm64) are the supported native targets for the binary and the SDK-embedded core. **Windows is deferred to Phase 2** — interim guidance is WSL2 (Linux binary) with a documented native-Windows build item; a sizable share of developers (and most enterprise/regulated desktops) run Windows, so this is a known gap tracked in §9, not an oversight
+- Signed images and binaries + SBOM (NFR-9); zero mandatory egress, always (NFR-6). Because the SDK-embedded core ships as a **prebuilt per-platform Go binary inside the wheel/npm package** (§3.3), reproducibility is preserved by building each platform artifact from a pinned toolchain in a hermetic pipeline, publishing a per-artifact SBOM, and recording the embedded binary's content hash in the package manifest — so the core bundled in `pip`/`npm` is byte-for-byte reproducible and independently attestable, not an opaque blob riding inside a language package
 - `gurdyctl` CLI: install preflight, bundle push, ledger export, verify, report trigger — same binary in both tiers
 
 ### 5.9 SDKs (`gurdy` for Python, `@gurdy/sdk` for TypeScript) — open-source (ADR-9)
@@ -382,7 +396,7 @@ Packs are maintained, adversarially-tested, reviewed policy sets. Three tiers of
 | **Governed agent disarms its own enforcement via the local admin API** — a prompt-injected agent on the same host calls `POST /policy/rollback` or `/policy/reload` and removes the policy that would have blocked it | **Created by ADR-14 and currently unmitigated.** The admin API is localhost-bound with a CSRF/DNS-rebinding guard, which stops a *browser*, not a process that already runs on the box — and the governed agent always does. Under monitor this is a log-integrity problem; under local enforce it is a total enforcement bypass. Required before local enforce ships: authenticate mutating admin routes with a token readable only by the installing user, drop the agent's ability to read it, and record every bundle change as a ledger record so a disarm is at minimum *evident* even if not preventable | Local-enforce security tests §8.3 |
 | Agent retries a blocked call until it succeeds, or reroutes to an unproxied path | Block is recorded per attempt, so repeated blocks are visible as a pattern rather than absorbed silently; egress NetworkPolicy and orphan detection remain the compensating controls for the reroute case | AT-corpus §8.4 |
 
-**Bypass on a local install (ADR-14).** In a cluster the "route around the proxy" threat is answered by deploy-time NetworkPolicy templates. **A laptop has no NetworkPolicy.** A free-tier user's agent can often simply talk to the MCP server directly, so local enforcement is a control over a *configured* path, not a sealed one. The compensating controls are configuration-shaped — install-time MCP client config rewriting so the proxy is the configured endpoint, plus orphan/coverage detection that makes an un-proxied path visible in the local report — and they are weaker than the cluster story. Say so to free-tier users rather than implying a laptop is sealed.
+**Bypass on a local install (ADR-14).** In a cluster the "route around the proxy" threat is answered by deploy-time NetworkPolicy templates. **A laptop has no NetworkPolicy.** An agent on a laptop can often simply talk to the MCP server directly, so local enforcement is a control over a *configured* path, not a sealed one. The compensating controls are configuration-shaped — install-time MCP client config rewriting so the proxy is the configured endpoint, plus orphan/coverage detection that makes an un-proxied path visible in the local report — and they are weaker than the cluster story. Say so to free-tier users rather than implying a laptop is sealed.
 
 **Model calls (v0.8.4).** `llm/completion` extends the chokepoint from tool traffic to the agent's model traffic, so both halves of what an agent did sit under one identity in one chain. The same boundary applies as to any other action: a model call that does not traverse the proxy is invisible, exactly like an un-proxied tool call, and the compensating controls are the same configuration-shaped ones (§7 bypass row). Governing the model call is not content inspection — the decision sees metadata (provider, model, endpoint, payload hash), and any judgement about *what was in* the payload arrives later as an advisory `finding` (§5.5, ADR-7).
 
@@ -438,7 +452,7 @@ Packs are maintained, adversarially-tested, reviewed policy sets. Three tiers of
 | Key lifecycle | Rotation under live traffic; verifier handles multi-key periods | Zero decision gaps during rotation |
 | Field telemetry as test | Coverage %, orphan rate, indeterminate-decision rate per partner | Orphan+indeterminate <5% by day 60, else instrumentation work item |
 
-**Local enforcement (Phase 2, ADR-14 — free tier):**
+**Local enforcement (Phase 2):**
 - Actuator interface + local block actuator on both ingresses (HTTP short-circuit; stdio synthesized JSON-RPC error), batch-partial-block semantics per §5.1
 - Per-policy `enforce_action`/`on_error` honored; `decision`/`policy_mode`/`action_applied`/`fail_mode_applied` all recorded and mutually consistent
 - **Durability:** enforced-path records written synchronously before the actuator's effect is released; drill the queue-overflow and kill-mid-decision cases and assert no enforced call is ever unrecorded (§5.5)
@@ -448,7 +462,7 @@ Packs are maintained, adversarially-tested, reviewed policy sets. Three tiers of
 - **Local bypass test:** agent talks to the MCP server directly, around the proxy — the un-proxied path must surface as a coverage finding in the local report
 - **Agent-framework retry behavior:** replay a blocked call against real LangChain / Claude agent SDK / MCP TS clients and assert the agent degrades sanely rather than retrying forever. Protocol correctness is not the same as agent-loop correctness
 - **Recovery UX:** "why was this blocked", temporary monitor override, and policy rollback are exercised end-to-end — the false-positive path is a first-class scenario, not an afterthought
-- Enforce-path p99 re-measured against NFR-1 (now a free-tier gate); every adversarial-corpus trace given an expected *action* alongside its expected decision
+- Enforce-path p99 re-measured against NFR-1 (a release gate); every adversarial-corpus trace given an expected *action* alongside its expected decision
 
 ### 8.4 Phase 3 — Fleet enforcement + hardening
 

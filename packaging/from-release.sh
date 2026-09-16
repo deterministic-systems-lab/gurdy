@@ -18,7 +18,7 @@ set -euo pipefail
 
 TAG="${1:?usage: from-release.sh <tag> [dest]}"
 DEST="${2:-dist}"
-REPO="${GITHUB_REPOSITORY:-GurdyAI/gurdy}"
+REPO="${GITHUB_REPOSITORY:-deterministic-systems-lab/gurdy}"
 
 command -v gh >/dev/null || { echo "error: gh is required" >&2; exit 1; }
 

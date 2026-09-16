@@ -7,16 +7,16 @@ tamper-evident record that someone who does not trust you can verify offline.
 It never blocks anything. Not yet, and not by accident — see
 [Monitor mode](#monitor-mode-nothing-here-blocks-traffic).
 
-> **Status: pre-release, Phase 1.** The core works and is tested; packaging,
-> release hygiene and the paid layer are not done. There is no `brew install`
-> yet — you build it. See [What is not built](#what-is-not-built).
+> **Status: early, Phase 1.** The core works and is tested; a lot is not built.
+> Gurdy is entirely open source — there is no paid tier and no withheld
+> component. See [What is not built](#what-is-not-built).
 
 ## Five minutes, no infrastructure
 
 You need Go 1.26+ (`proxy/go.mod`). Nothing else — no server, no account, no network.
 
 ```bash
-git clone https://github.com/GurdyAI/gurdy && cd gurdy/proxy
+git clone https://github.com/deterministic-systems-lab/gurdy && cd gurdy/proxy
 go build -o /tmp/gurdy-proxy ./cmd/gurdy-proxy
 go build -o /tmp/gurdy-verify ./cmd/gurdy-verify
 ```
@@ -213,8 +213,9 @@ wrong thing to be bad at:
 - **Seven known attack gaps**, published in [`corpus/`](corpus/) rather than
   quietly omitted. Five share one root cause: controls match on strings the
   agent chooses.
-- **The paid layer does not exist** — no framework-mapped report, no pack
-  registry, no fleet control plane.
+- **No framework-mapped report, no pack registry, no fleet control plane.**
+  These were once planned as the paid layer; that plan is gone and they are
+  now simply unbuilt, tracked in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Licence
 

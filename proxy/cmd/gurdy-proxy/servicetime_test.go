@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/GurdyAI/gurdy/proxy/internal/clock"
-	"github.com/GurdyAI/gurdy/proxy/internal/extract"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/clock"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/extract"
 )
 
 // TestDecisionServiceTimeDistribution reports the *distribution* of the proxy's

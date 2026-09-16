@@ -7,7 +7,7 @@ already know is weak, and how to tell us.
 
 ## Reporting
 
-Use **[GitHub private vulnerability reporting](https://github.com/GurdyAI/gurdy/security/advisories/new)**.
+Use **[GitHub private vulnerability reporting](https://github.com/deterministic-systems-lab/gurdy/security/advisories/new)**.
 It is private until we publish, and it needs no key exchange or mailing list.
 
 Please do not open a public issue for anything in [What counts](#what-counts-as-a-vulnerability)

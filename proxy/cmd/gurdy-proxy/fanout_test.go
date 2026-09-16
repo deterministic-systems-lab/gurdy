@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/GurdyAI/gurdy/proxy/internal/tis"
+	"github.com/deterministic-systems-lab/gurdy/proxy/internal/tis"
 )
 
 // The §3.G fan-out burst: 20 sub-agents derived from one root, 50 concurrent
