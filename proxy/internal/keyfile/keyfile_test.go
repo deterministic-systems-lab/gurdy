@@ -1,6 +1,9 @@
 package keyfile
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"os"
 	"path/filepath"
 	"sync"
@@ -147,5 +150,58 @@ func TestExistingKeyIsReusedNotRegenerated(t *testing.T) {
 	}
 	if !first.Equal(second) {
 		t.Fatal("LoadOrCreate minted a new key for an existing path — the chain would stop verifying")
+	}
+}
+
+// Replace is how rotation displaces a live signing key, so its failure paths
+// are the ones that decide whether a bad state directory degrades or corrupts.
+// It must fail loudly and leave the existing key intact — a half-written or
+// missing key file is a deployment that cannot verify its own outstanding
+// credentials after the next restart.
+func TestReplaceFailsLoudlyAndPreservesTheOldKey(t *testing.T) {
+	dir := t.TempDir()
+
+	// The parent of the target is a regular file, which is what pointing
+	// -state-dir at a file looks like from here. MkdirAll cannot proceed.
+	notADir := filepath.Join(dir, "state")
+	if err := os.WriteFile(notADir, []byte("file, not a directory"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	fresh, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Replace(filepath.Join(notADir, "key.pem"), fresh); err == nil {
+		t.Error("Replace succeeded with a file where its directory should be")
+	}
+
+	// And the case that matters most: a failed Replace over an existing key
+	// leaves the original readable. Rotation reports the error and keeps
+	// signing with what is genuinely on disk.
+	path := filepath.Join(dir, "key.pem")
+	original, err := LoadOrCreate(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(path+".blocked", 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := Replace(path+".blocked", fresh); err == nil {
+		t.Error("Replace succeeded onto a directory")
+	}
+	reloaded, err := Load(path)
+	if err != nil {
+		t.Fatalf("the original key is no longer loadable: %v", err)
+	}
+	if !reloaded.Equal(original) {
+		t.Error("a failed Replace elsewhere disturbed the existing key")
+	}
+
+	// No temp files left behind. These are private keys: a .key-*.tmp that
+	// survives a failure is key material sitting in the state directory under a
+	// name nothing will ever clean up.
+	leftovers, _ := filepath.Glob(filepath.Join(dir, ".key-*.tmp"))
+	if len(leftovers) != 0 {
+		t.Errorf("failed Replace left private key material behind: %v", leftovers)
 	}
 }

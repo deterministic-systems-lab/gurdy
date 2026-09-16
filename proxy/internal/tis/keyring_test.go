@@ -291,3 +291,125 @@ func TestJWKCoordinatesArePaddedNotTrimmed(t *testing.T) {
 		}
 	}
 }
+
+// RotateDue is what turns NFR-5's "≤24h" from a comment into a guarantee, and
+// it was the one part of the keyring with no test at all — caught by the
+// coverage ratchet rather than by review. Both directions matter: never firing
+// leaves a key alive indefinitely, firing always rotates on every tick and
+// retires keys while tokens signed by them are still live.
+func TestRotateDueRespectsTheInterval(t *testing.T) {
+	ts := newTIS(t)
+	ts.mu.Lock()
+	start := ts.ring.rotated
+	ts.mu.Unlock()
+
+	for _, tc := range []struct {
+		name string
+		at   time.Time
+		want bool
+	}{
+		{"immediately after loading", start, false},
+		{"one second short of the interval", start.Add(RotateEvery - time.Second), false},
+		{"exactly at the interval", start.Add(RotateEvery), true},
+		{"long overdue", start.Add(30 * 24 * time.Hour), true},
+	} {
+		if got := ts.RotateDue(tc.at); got != tc.want {
+			t.Errorf("%s: RotateDue = %v, want %v", tc.name, got, tc.want)
+		}
+	}
+
+	// Rotating restarts the clock. Without this a deployment that came up
+	// overdue would rotate on every single tick, retiring each key one tick
+	// after minting it — tokens outliving their key by design.
+	if err := ts.Rotate(); err != nil {
+		t.Fatal(err)
+	}
+	if ts.RotateDue(time.Now()) {
+		t.Error("still due immediately after rotating — the interval clock was not reset")
+	}
+}
+
+// A corrupt previous key must stop startup, not be skipped. Skipping it would
+// silently drop the overlap: the proxy comes up with one key, and every token
+// minted before the last rotation fails verification — recorded as `invalid`,
+// which is indistinguishable from a forgery (NFR-3 degrades the evidence rather
+// than the traffic, so nothing else would announce it).
+func TestCorruptPreviousKeyIsRefusedNotSkipped(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "key.pem")
+	ts, err := New("deploy-test", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ts.Rotate(); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(prevPath(path), []byte("not a pem file"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := New("deploy-test", path); err == nil {
+		t.Error("a corrupt previous key was ignored — the overlap would be silently lost")
+	}
+}
+
+// A rotation that cannot persist must not happen in memory either. The comment
+// on Rotate claims this; until now nothing held it to it.
+//
+// The failure it prevents is the one this repo keeps re-finding — state that
+// outlives its own proof. A keyring that advanced while the disk did not would
+// sign with a key no restart can reload, so every token minted between here and
+// the next restart dies at that restart, and the deployment looks healthy the
+// whole time.
+func TestFailedRotationLeavesTheKeyringUntouched(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "key.pem")
+	ts, err := New("deploy-test", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := mintOne(t, ts)
+	kidBefore := ts.CurrentKid()
+
+	// A directory where the previous key belongs: the rename cannot land, so
+	// persistence fails at the first of the two writes.
+	if err := os.Mkdir(prevPath(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := ts.Rotate(); err == nil {
+		t.Fatal("rotation reported success though it could not persist the previous key")
+	}
+	if got := ts.CurrentKid(); got != kidBefore {
+		t.Errorf("signing key advanced to %s despite a failed write (was %s)", got, kidBefore)
+	}
+	if _, err := ts.VerifyTxn(before); err != nil {
+		t.Errorf("a token from before the failed rotation stopped verifying: %v", err)
+	}
+	// And the deployment is still able to work: minting continues under the key
+	// that is genuinely on disk, so a failed rotation degrades to "overdue",
+	// never to "broken".
+	if _, err := ts.VerifyTxn(mintOne(t, ts)); err != nil {
+		t.Errorf("minting is broken after a failed rotation: %v", err)
+	}
+	if n := len(ts.JWKS()); n != 1 {
+		t.Errorf("JWKS publishes %d keys after a failed rotation, want 1", n)
+	}
+}
+
+// byKid must never match on an empty string. Before the first rotation prevKid
+// is "", so a lookup of "" would fall into the previous-key case and match a
+// key that does not exist — the nil check is what stops that, and this is the
+// only way to reach it. parse() sends kid-less tokens down the candidates path
+// instead, so this guards the function rather than the current caller: the
+// hazard is a future caller trusting byKid to reject what it cannot resolve.
+func TestByKidNeverMatchesTheEmptyString(t *testing.T) {
+	ts := newTIS(t)
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+
+	if _, ok := ts.ring.byKid(""); ok {
+		t.Error("an empty kid resolved to a key before any rotation")
+	}
+	if _, ok := ts.ring.byKid(ts.ring.curKid); !ok {
+		t.Error("the current kid did not resolve")
+	}
+}
