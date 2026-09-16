@@ -38,8 +38,12 @@ fleet coordination and the framework-mapped evidence report — as *unbuilt, not
 to move contributed code into the paid product", which now has no product to refer to. The promise
 did not weaken; the thing that could have weakened it stopped existing.
 
-**Copyright moved from `GurdyAI` to `The Gurdy Authors`** in `LICENSE` and `NOTICE`. Flagged rather
-than assumed — it is a legal attribution and the author's to confirm.
+**Copyright is Tristan McKinnon**, in `LICENSE` and `NOTICE` (author decision 2026-09-16). It named
+`GurdyAI`, a company that is being wound down, and a copyright line naming a dormant entity is worse
+than a stale pointer — it is the line a downstream consumer's legal review reads first, and the
+entity it names has to be one that can actually grant the licence. It briefly read "The Gurdy
+Authors", which was a placeholder chosen rather than assumed, and was flagged as the author's call;
+Gurdy has one author and the file now says so.
 
 **The move: a copy, not a transfer.** `GurdyAI` is left untouched and will be made private. That is
 the decision with a consequence worth writing down: **a transfer redirects, a copy does not, and a
