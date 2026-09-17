@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "ids": {
+    "credential_read": "shadow-credential-read",
+    "sensitive_write": "shadow-sensitive-write",
+    "destructive_fs": "shadow-destructive-fs",
+    "named_tools": "shadow-named-tools",
+    "unlisted_model_host": "shadow-unlisted-model-host"
+  },
+  "credential_paths": [
+    {"glob": "*/.ssh", "note": "OpenSSH directory (Glob/list)"},
+    {"glob": "*/.ssh/*", "note": "OpenSSH keys and config"},
+    {"glob": "*/.aws", "note": "AWS directory (Glob/list)"},
+    {"glob": "*/.aws/*", "note": "AWS credentials"},
+    {"glob": "*/.gnupg", "note": "GnuPG directory (Glob/list)"},
+    {"glob": "*/.gnupg/*", "note": "GnuPG homedir"},
+    {"glob": "*/.env", "note": "dotenv"},
+    {"glob": "*/.env.*", "note": "dotenv variants"},
+    {"glob": "*/id_rsa", "note": "RSA private key filename"},
+    {"glob": "*/id_ed25519", "note": "Ed25519 private key filename"},
+    {"glob": "*/credentials", "note": "generic credentials file"}
+  ],
+  "write_paths": [],
+  "destructive_tools": [
+    {"op": "like", "value": "delete*", "shell": false},
+    {"op": "like", "value": "remove*", "shell": false},
+    {"op": "like", "value": "rmdir*", "shell": true},
+    {"op": "like", "value": "unlink*", "shell": true},
+    {"op": "eq", "value": "rm", "shell": true},
+    {"op": "eq", "value": "shred", "shell": true},
+    {"op": "like", "value": "truncate*", "shell": true}
+  ],
+  "shell_aliases": [
+    {"command": "curl", "tool": "http_fetch", "forbid": true, "note": "HTTP exfil"},
+    {"command": "wget", "tool": "http_fetch", "forbid": true, "note": "HTTP exfil"},
+    {"command": "nc", "tool": "http_fetch", "forbid": true, "note": "netcat"},
+    {"command": "ncat", "tool": "http_fetch", "forbid": true, "note": "nmap netcat"}
+  ],
+  "unlisted_model_host": true
+}

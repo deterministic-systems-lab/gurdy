@@ -1,0 +1,36 @@
+{
+  "name": "gurdy-console",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test:fleet": "node --experimental-strip-types --test lib/*.test.ts",
+    "migrate": "node --env-file=.env.local scripts/migrate.mjs",
+    "setup-neon": "node scripts/setup-neon.mjs",
+    "setup-vercel": "node scripts/setup-vercel.mjs",
+    "roundtrip": "node --env-file=.env.local scripts/roundtrip.mjs"
+  },
+  "dependencies": {
+    "@auth/pg-adapter": "^1.11.3",
+    "@neondatabase/serverless": "^1.1.0",
+    "ai": "^7.0.102",
+    "next": "16.3.5",
+    "next-auth": "^5.0.0-beta.32",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.5",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "packageManager": "npm@12.0.1+sha512.2f94fd8bf600416416a934bfc59c4991e8bff7372ef7d842784e2a8b8d48c81555ee645069ddea73625fb8e92dc261feab0188fd5dab6c22fefd46316f5f9140"
+}

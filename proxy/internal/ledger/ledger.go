@@ -139,15 +139,16 @@ const (
 // action_applied=blocked is an enforcement claim. A record that cannot tell
 // those apart is ambiguous exactly where it matters.
 //
-// Only the monitor-mode half exists here — ModeWarn/ModeEnforce and
-// ActionBlocked/ActionFailedClosed land with the Phase 2 actuator (ADR-14),
-// which is the first thing able to produce them. The *fields* land now: adding
-// one after evidence exists is a migration, not an edit.
+// ModeEnforce and ActionBlocked land with the local-enforce actuator (ADR-14).
+// action_applied=blocked is the only stopped value this build writes;
+// "stopped" is not a legal action_applied.
 const (
 	ModeMonitor = "monitor"
+	ModeEnforce = "enforce"
 
 	ActionForwarded  = "forwarded"
 	ActionFailedOpen = "failed-open"
+	ActionBlocked    = "blocked"
 
 	FailOpen = "open"
 )

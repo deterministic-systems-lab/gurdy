@@ -9,6 +9,26 @@ it starts, and from the flip onward it is the *only* narrative of the build that
 
 ---
 
+## 2026-09-16 — local enforce, fleet, pack builder, console, adapters
+
+The capabilities that used to live only in a private overlay are in this
+tree.
+
+- **`-enforce`** is the local actuator (ADR-14). HTTP and stdio both stop
+  `decision=block` after a durable record. Monitor remains the default.
+- **`policy/`** generates Cedar from `controls.json`. The same pack
+  governs wrapped MCP and synthesized native calls.
+- **`fleet/`** ships verified ledger suffixes and pulls desired pack +
+  enforce. **`console/`** is the suggested Next.js management framework
+  that hosts those APIs.
+- **`adapters/`** is the drop-in seam. Cursor is the first host; the
+  contract is classify → `tools/call` → `gurdy-proxy`.
+
+Admin-API mutating routes are still localhost + CSRF only. That is the
+remaining Phase 2 security gate, not an enforcement gap in the actuator.
+
+---
+
 ## 2026-09-16 — no paid tier, and a new home
 
 Two changes, and only one of them is mechanical.

@@ -1,0 +1,19 @@
+{
+  "_comment": "Source of truth for adapters/cursor/mcp.json. Add stdio servers with `python3 policy/pack.py add-mcp NAME -- cmd args` (always wrapped). `make mcp` / `make install-cursor` regenerates Cursor config. HTTP/plugin servers cannot be wrapped by -stdio; stream A either reverse-proxies them or re-registers them as a custom URL.",
+  "servers": {
+    "atlassian": {
+      "transport": "http",
+      "url": "https://mcp.atlassian.com/v2/mcp",
+      "wrap": false,
+      "proxy_listen": "127.0.0.1:18090",
+      "note": "Cursor Atlassian plugin (plugin-atlassian-atlassian) is ungoverable: gurdy-proxy never sees that channel. adapters/cursor/http-proxy.sh is the reverse-proxy hop; set wrap=true only after pointing Cursor at http://127.0.0.1:18090/v2/mcp AND a tools/call appears in ~/.gurdy/ledger/atlassian/. OAuth that only works inside the plugin keeps this identity-hook-only."
+    },
+    "filesystem": {
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${userHome}"],
+      "wrap": true,
+      "note": "Demo target. Credential-read and destructive-fs rules fire on this server's tools/call traffic."
+    }
+  }
+}

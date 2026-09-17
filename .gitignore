@@ -24,3 +24,14 @@ dist/
 # npm packaging build output (platform binaries)
 packaging/npm/out/
 packaging/pypi/out/
+
+# management console
+console/node_modules/
+console/.next/
+console/.env.local
+console/bin/gurdy-*-linux-amd64
+
+# generated Cursor templates (absolute paths)
+adapters/cursor/mcp.json
+adapters/cursor/mcp.local.json
+adapters/cursor/hooks.json

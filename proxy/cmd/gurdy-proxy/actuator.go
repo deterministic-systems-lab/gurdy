@@ -62,3 +62,19 @@ func (monitorActuator) Plan(d policy.Decision) Plan {
 	}
 	return Plan{Forward: true, Applied: ledger.ActionForwarded}
 }
+
+// enforceActuator is the local-enforce Act stage (ADR-14): decision=block
+// stops the traffic after the record is durable. Indeterminate stays
+// fail-open (NFR-3) — an inspection failure must not become a deny.
+type enforceActuator struct{}
+
+func (enforceActuator) Plan(d policy.Decision) Plan {
+	switch d {
+	case policy.Indeterminate:
+		return Plan{Forward: true, Applied: ledger.ActionFailedOpen, FailMode: ledger.FailOpen}
+	case policy.Block:
+		return Plan{Forward: false, Applied: ledger.ActionBlocked, Durable: true}
+	default:
+		return Plan{Forward: true, Applied: ledger.ActionForwarded}
+	}
+}

@@ -213,11 +213,12 @@ semantics. **Add new transports by adapting to `decideCall`, never by duplicatin
 
 Breaking any of these breaks a requirement, not just a test:
 
-- **Monitor mode only.** Nothing in this tree may drop, alter, or delay traffic (ADR-3). The local
-  enforce actuator (ADR-14) is Phase 2 work and needs an actuator interface that does not exist yet.
-  `decision=block` is legal and does **not** contradict this: `decision` is the policy's conclusion,
-  `action_applied` is what happened to the traffic, and `policy_mode` is the rule's rollout state —
-  three separate fields (§4.2). block + monitor + forwarded is the shadow record of §8.3.
+- **Monitor is the default.** Without `-enforce` nothing may drop, alter, or delay traffic (ADR-3).
+  The local enforce actuator (ADR-14) is `enforceActuator` behind `-enforce`. `decision=block` is
+  legal in either mode: `decision` is the policy's conclusion, `action_applied` is what happened to
+  the traffic, and `policy_mode` is which actuator was selected — three separate fields (§4.2).
+  block + monitor + forwarded is the shadow record of §8.3. block + enforce + blocked is a stop,
+  and the record must be durable first.
 - **Inspection failure never breaks traffic** (NFR-3). Oversized bodies, undecodable frames, failed
   identity — all forward and record `indeterminate`. Coverage gaps are *counted and surfaced*, never
   silent.

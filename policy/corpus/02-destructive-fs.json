@@ -1,0 +1,30 @@
+{
+  "name": "destructive fs: delete_file",
+  "attack": "delete a workspace file through an MCP filesystem tool",
+  "why": "shadow-destructive-fs. Name-prefix control, working as designed.",
+  "kind": "wire",
+  "steps": [
+    {
+      "call": {
+        "txn": "none",
+        "tool": "delete_file",
+        "args": {
+          "path": "/workspace/report.md"
+        }
+      }
+    }
+  ],
+  "expect": {
+    "records": [
+      {
+        "action": "mcp/tools_call",
+        "action_applied": "forwarded",
+        "tool": "delete_file",
+        "decision": "block",
+        "policy": "shadow-destructive-fs",
+        "policy_mode": "monitor"
+      }
+    ],
+    "upstream_calls": 1
+  }
+}

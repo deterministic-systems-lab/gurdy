@@ -94,7 +94,7 @@ func newStdioSession(t *testing.T) *stdioSession {
 func (s *stdioSession) send(t *testing.T, lines ...string) {
 	t.Helper()
 	in := strings.Join(lines, "\n") + "\n"
-	if err := relay(s.g, "stdio:x", s.pend, strings.NewReader(in), nopWriteCloser{io.Discard}); err != nil {
+	if err := relay(s.g, "stdio:x", s.pend, strings.NewReader(in), nopWriteCloser{io.Discard}, nil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -326,7 +326,7 @@ func TestShimSequentialIDReuseUnderConcurrency(t *testing.T) {
 		}
 		childOut.Close()
 	}()
-	go func() { relay(s.g, "stdio:x", s.pend, clientIn, childIn); childInR.Close() }()
+	go func() { relay(s.g, "stdio:x", s.pend, clientIn, childIn, nil); childInR.Close() }()
 	go func() { relayOut(s.g, "stdio:x", s.pend, childOutR, clientOut); clientOut.Close() }()
 
 	// The client: send, wait for the answer, immediately reuse the id.

