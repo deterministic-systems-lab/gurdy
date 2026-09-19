@@ -44,10 +44,12 @@ func runShim(g *gateway, argv []string, in io.Reader, out io.Writer) error {
 
 	coarse := "stdio:" + filepath.Base(argv[0])
 	pend := &pending{m: map[string]*slot{}}
+	outMu := sync.Mutex{}
+	safeOut := &lockedWriter{mu: &outMu, w: out}
 	outDone := make(chan error, 1)
-	go func() { outDone <- relayOut(g, coarse, pend, childOut, out) }()
+	go func() { outDone <- relayOut(g, coarse, pend, childOut, safeOut) }()
 	relayDone := make(chan error, 1)
-	go func() { relayDone <- relay(g, coarse, pend, in, childIn) }()
+	go func() { relayDone <- relay(g, coarse, pend, in, childIn, safeOut) }()
 
 	copyErr := <-outDone
 	waitErr := cmd.Wait()
@@ -170,10 +172,23 @@ func (p *pending) claim(id string) string {
 // notification, which nothing answers.
 func trackable(id string) bool { return id != "" && len(id) <= maxIDLen }
 
+type lockedWriter struct {
+	mu *sync.Mutex
+	w  io.Writer
+}
+
+func (l *lockedWriter) Write(p []byte) (int, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.w.Write(p)
+}
+
 // relay forwards newline-delimited frames to the child, deciding each
 // tools/call. Lines beyond maxInspect are forwarded uninspected and recorded
 // indeterminate (§5.1) — same bound and semantics as the HTTP path.
-func relay(g *gateway, coarse string, pend *pending, in io.Reader, childIn io.WriteCloser) error {
+// The client receives JSON-RPC errors for blocked calls so the agent is not
+// left waiting on an id the child will never answer.
+func relay(g *gateway, coarse string, pend *pending, in io.Reader, childIn io.WriteCloser, client io.Writer) error {
 	defer childIn.Close()
 	rd := bufio.NewReaderSize(in, maxInspect)
 	skipping := false // inside an oversized line, forwarding until its newline
@@ -186,14 +201,42 @@ func relay(g *gateway, coarse string, pend *pending, in io.Reader, childIn io.Wr
 					// recorded indeterminate and left unanswered.
 					g.indeterminateCall(coarse, ledger.AssertionAbsent, "line exceeds inspection limit")
 				} else {
+					blocked := map[string]bool{}
 					for _, tc := range mcp.ParseToolsCalls(chunk) {
 						if tc.Name == "" {
 							pend.track(tc.ID, g.indeterminateCall(coarse, ledger.AssertionAbsent, "undecodable tools/call params"))
 							continue
 						}
-						pend.track(tc.ID, g.decideCall(context.Background(), "", coarse, extract.Call{
+						callID, plan := g.decideCall(context.Background(), "", coarse, extract.Call{
 							Tool: tc.Name, Arguments: tc.Arguments,
-						}, chunk))
+						}, chunk)
+						pend.track(tc.ID, callID)
+						if !plan.Forward {
+							blocked[tc.ID] = true
+							errLine := append(jsonRPCError(tc.ID), '\n')
+							if client != nil {
+								if _, werr := client.Write(errLine); werr != nil {
+									return fmt.Errorf("shim: write blocked error: %w", werr)
+								}
+							}
+							g.recordResponses(coarse, pend, errLine)
+						}
+					}
+					if len(blocked) > 0 {
+						chunk = filterBlockedCalls(chunk, blocked)
+						if chunk == nil {
+							switch err {
+							case nil:
+								skipping = false
+							case bufio.ErrBufferFull:
+								skipping = true
+							case io.EOF:
+								return nil
+							default:
+								return fmt.Errorf("shim: read client: %w", err)
+							}
+							continue
+						}
 					}
 				}
 			}

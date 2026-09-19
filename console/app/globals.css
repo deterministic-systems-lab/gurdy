@@ -1,0 +1,541 @@
+@import "tailwindcss";
+
+:root {
+  --indigo: #10069f;
+  --indigo-deep: #0100a0;
+  --indigo-slate: #293490;
+  --mint: #00d4a7;
+  --mint-dark: #00a272;
+  --mint-light: #67f4c9;
+  --coral: #ef6b51;
+  --coral-ink: #a8321c;
+  --periwinkle: #e0e9ff;
+  --lavender: #d9d7f0;
+  --paper: #f0f5ff;
+  --sky: #3d9df4;
+  --ink: #141414;
+  --grey: #828282;
+  --bg: var(--paper);
+  --fg: var(--ink);
+  /* Brand grey is 3:1 on paper, which is too light for copy. */
+  --muted: #3d3d4a;
+  --line: #c9d2e8;
+  --warn: var(--coral);
+  --ok: var(--mint);
+
+  /* Pills stay round. Cards and fields step down so a ten-row textarea does
+     not read as a lozenge. */
+  --radius-pill: 35px;
+  --radius-card: 28px;
+  --radius-field: 16px;
+
+  /* Depth is a scale, not one value: resting, raised, lifted, overlay. Tints
+     carry indigo rather than neutral grey, so shadows belong to the palette. */
+  --shadow-flat: 0 1px 2px rgba(16, 6, 159, 0.05);
+  --shadow-pop:
+    0 1px 2px rgba(16, 6, 159, 0.05), 0 11px 30px rgba(154, 161, 177, 0.2);
+  --shadow-lift:
+    0 2px 4px rgba(16, 6, 159, 0.06), 0 18px 44px rgba(16, 6, 159, 0.16);
+  --shadow-deep:
+    0 3px 6px rgba(16, 6, 159, 0.08), 0 30px 64px rgba(16, 6, 159, 0.22);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 130ms;
+  --dur: 200ms;
+
+  --ring: var(--sky);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+h1,
+.display {
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  nav a {
+    text-decoration: none;
+  }
+}
+
+::selection {
+  background: var(--mint);
+  color: var(--ink);
+}
+
+/* Nothing in this app had a focus style, so keyboard users had only whatever
+   the browser drew. One ring, on every control, and only for keyboard focus. */
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 3px;
+}
+
+/* The rail sits under the left edge; a ring there would be clipped. */
+.pill-btn:focus-visible {
+  outline-offset: 4px;
+}
+
+.pill-btn {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* A pill is a fixed shape. Let a label wrap and the shape grows a second
+     line around it, which reads as a broken control rather than a long one. */
+  white-space: nowrap;
+  box-shadow: var(--shadow-flat);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out),
+    background-color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out);
+}
+
+.pill-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+
+/* Press goes past the resting line, so the button feels pushed rather than
+   snapped back. */
+.pill-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: var(--shadow-flat);
+  transition-duration: 60ms;
+}
+
+.pill-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+.pill-btn[aria-busy="true"] {
+  cursor: wait;
+}
+
+/* Fields: the browser default border went flat against the cards. */
+.field {
+  width: 100%;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-field);
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(16, 6, 159, 0.05);
+  transition:
+    border-color var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out);
+}
+
+.field:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--indigo) 45%, var(--line));
+}
+
+.field:focus {
+  border-color: var(--indigo);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--sky) 22%, transparent);
+  outline: none;
+}
+
+.field::placeholder {
+  color: var(--grey);
+}
+
+/* Unlayered so link `color` cannot inherit body ink onto a dark fill. */
+.pill-on {
+  background: var(--indigo);
+  border: 2px solid var(--indigo);
+  color: #ffffff;
+}
+
+.pill-on:hover:not(:disabled) {
+  background: var(--indigo-deep);
+  color: #ffffff;
+}
+
+.pill-off {
+  background: #ffffff;
+  border: 2px solid var(--indigo);
+  color: var(--indigo);
+}
+
+.pill-off:hover:not(:disabled) {
+  background: var(--periwinkle);
+  color: var(--indigo);
+}
+
+/* The left rail was a flat block of indigo down the whole page. */
+.rail {
+  background: linear-gradient(
+    180deg,
+    var(--indigo-deep) 0%,
+    var(--indigo) 45%,
+    var(--indigo-slate) 100%
+  );
+  box-shadow: 2px 0 14px rgba(16, 6, 159, 0.28);
+}
+
+/* Sign-in only: a factory of gurdies sits behind the form. The wash keeps
+   the heading readable. The image is decorative, not a status. */
+.login-stage {
+  position: relative;
+  isolation: isolate;
+  min-height: 100%;
+}
+
+.login-factory {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.login-factory-img {
+  object-fit: cover;
+  object-position: 68% 42%;
+  opacity: 0.34;
+}
+
+.login-factory::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    var(--paper) 0%,
+    color-mix(in srgb, var(--paper) 90%, transparent) 38%,
+    color-mix(in srgb, var(--paper) 58%, transparent) 72%,
+    color-mix(in srgb, var(--paper) 36%, transparent) 100%
+  );
+}
+
+/* Signed-in pages: the factory office, same wash rule as sign-in. */
+.app-stage {
+  position: relative;
+  isolation: isolate;
+}
+
+.app-office {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.app-office-img {
+  object-fit: cover;
+  object-position: 50% 38%;
+  opacity: 0.32;
+}
+
+.app-office::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 78% 68% at 50% 28%,
+    var(--paper) 0%,
+    color-mix(in srgb, var(--paper) 82%, transparent) 48%,
+    color-mix(in srgb, var(--paper) 40%, transparent) 100%
+  );
+}
+
+.chip {
+  box-shadow: var(--shadow-flat);
+}
+
+/* Rows in one card, for lists where every entry carries the same few fields.
+   Separate cards give each row a header's worth of weight and lose the
+   column, which is what you actually scan down. */
+.row-list > li {
+  position: relative;
+  transition: background-color var(--dur) var(--ease-out);
+}
+
+.row-list > li + li {
+  border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+}
+
+.row-list > li:hover {
+  background: color-mix(in srgb, var(--periwinkle) 42%, transparent);
+}
+
+/* Stopped rows get the indigo edge. Shadow rows get lavender. The chip
+   on the row is the scan target; this mark is the backup when you scroll. */
+.row-stopped {
+  background: color-mix(in srgb, var(--periwinkle) 48%, transparent);
+}
+
+.row-stopped::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--indigo);
+}
+
+.row-shadow {
+  background: color-mix(in srgb, var(--lavender) 38%, transparent);
+}
+
+.row-shadow::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--lavender);
+}
+
+/* The row that is in force gets the edge mark, so the eye lands on it. */
+.row-current::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--indigo);
+}
+
+.pill-admin-mark {
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pill-on .pill-admin-mark {
+  background: #ffffff;
+  color: var(--indigo);
+}
+
+.pill-off .pill-admin-mark {
+  background: var(--indigo);
+  color: #ffffff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill-btn {
+    transition: background-color 160ms ease;
+  }
+
+  .pill-btn:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+code,
+pre,
+.mono {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* One edge treatment, not two. A hairline border under a wide diffuse shadow
+   is the "ghost card": both applied, neither committed to. */
+.card {
+  position: relative;
+  background: #fff;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-pop);
+  transition:
+    box-shadow var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+}
+
+/* Only for cards you can actually click. A resting card that lifts under the
+   cursor promises an action that is not there. */
+.card-interactive:hover {
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-2px);
+}
+
+.card-interactive:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-pop);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card-interactive:hover,
+  .card-interactive:active {
+    transform: none;
+  }
+}
+
+/* No blanket entrance animation. A uniform fade-up on every list says nothing
+   about the data, and it delays the rows you came to read. Motion is kept for
+   the two places it means something: a number that just changed, and the
+   gurdy. */
+@media (prefers-reduced-motion: no-preference) {
+  .stat-num {
+    animation: pop-in 180ms ease-out;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    transform: scale(0.92);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.gurdy-instrument-stack {
+  position: relative;
+  width: 236px;
+}
+
+.gurdy-instrument {
+  width: 236px;
+  height: auto;
+  display: block;
+}
+
+.gurdy-instrument-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.gurdy-zzz {
+  position: absolute;
+  top: 0;
+  width: var(--z-size);
+  height: auto;
+  opacity: 0;
+  filter: drop-shadow(2px 3px 3px rgba(20, 20, 20, 0.25));
+}
+
+.gurdy-note {
+  position: absolute;
+  left: var(--mouth-x);
+  top: var(--mouth-y);
+  width: var(--note-size);
+  height: auto;
+  opacity: 0;
+  filter: drop-shadow(2px 4px 4px rgba(20, 20, 20, 0.28));
+  animation: gurdy-note-fly var(--note-dur) ease-out var(--note-delay) forwards;
+}
+
+@keyframes gurdy-note-fly {
+  0% {
+    opacity: 0;
+    transform: translate(0, 6px) scale(0.2) rotate(0deg);
+  }
+  14% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1.05) rotate(var(--spin));
+  }
+}
+
+/* Quiet until asked. This sits under a row of evidence and must not compete
+   with it, so it reads as a link rather than an action. */
+.explain-btn {
+  cursor: pointer;
+  border-bottom: 1px dashed currentColor;
+  color: var(--indigo);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.explain-btn:hover:not(:disabled) {
+  color: var(--indigo-deep);
+}
+
+.explain-btn:disabled {
+  color: var(--muted);
+  cursor: progress;
+}
+
+.explain-note {
+  border-left: 3px solid var(--lavender);
+  padding-left: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* The badge carries the disclaimer, so the sentence beside it can stay short. */
+.explain-tag {
+  margin-right: 6px;
+  border-radius: 999px;
+  background: var(--lavender);
+  padding: 1px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--indigo-deep);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gurdy-instrument-stack {
+    animation: gurdy-bob 2.8s ease-in-out infinite;
+  }
+
+  .gurdy-dozing {
+    animation-duration: 4.6s;
+  }
+
+  .gurdy-zzz {
+    animation: gurdy-zzz-drift var(--z-dur) ease-in-out var(--z-delay) infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gurdy-zzz {
+    opacity: 0.85;
+  }
+}
+
+@keyframes gurdy-zzz-drift {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.55) rotate(-10deg);
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(38px, -82px) scale(1.1) rotate(14deg);
+  }
+}
+
+@keyframes gurdy-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -7px;
+  }
+}

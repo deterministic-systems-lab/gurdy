@@ -1,0 +1,6 @@
+[Unit]
+Description=Gurdy ledger shipper (oneshot)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh __PUSH_SH__

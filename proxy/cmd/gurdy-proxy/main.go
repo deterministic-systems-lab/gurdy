@@ -1,7 +1,8 @@
-// gurdy-proxy: transparent MCP interceptor, monitor mode (§5.1, ADR-3).
-// Governance loop per call: identify → classify → decide → attest (§4.2),
+// gurdy-proxy: transparent MCP interceptor (§5.1).
+// Governance loop per call: identify → classify → decide → act → attest (§4.2),
 // with hot-reloadable policy bundles (FR-10) and a localhost admin API.
-// Never blocks traffic.
+// Default Act is monitor (forward everything). -enforce selects the local
+// block actuator (ADR-14).
 package main
 
 import (
@@ -67,6 +68,8 @@ func main() {
 	mintSock := flag.String("tis-socket", "",
 		"sideband TIS socket for SDK mint/derive (default <state-dir>/tis.sock; \"off\" disables)")
 	stdio := flag.Bool("stdio", false, "shim mode: wrap an MCP stdio server — gurdy-proxy -stdio [flags] <cmd> [args...]")
+	enforce := flag.Bool("enforce", false, "local-enforce actuator: decision=block stops traffic and records action_applied=blocked")
+	txnFile := flag.String("txn-file", "", "path to Gurdy-Txn sidecar (default $GURDY_HOME/identity/current.txn; \"off\" disables)")
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
 	if *showVersion {
@@ -168,6 +171,7 @@ func main() {
 		// stdout is the MCP protocol channel; decisions go to stderr.
 		g := newGateway(store, identity, led, *tenant,
 			slog.New(slog.NewJSONHandler(os.Stderr, nil)))
+		applyActuator(g, *enforce, *txnFile)
 		shimErr := runShim(g, flag.Args(), os.Stdin, os.Stdout)
 		stopMint()
 		if err := led.Close(); err != nil {
@@ -248,11 +252,17 @@ func main() {
 	decisionOut := newFlushWriter(os.Stdout, 200*time.Millisecond)
 	defer decisionOut.Close()
 
-	srv := &http.Server{Addr: *listen, Handler: Handler(target, store, identity, led, *tenant,
-		slog.New(slog.NewJSONHandler(decisionOut, nil)))}
+	gw := newHTTPGateway(target, store, identity, led, *tenant,
+		slog.New(slog.NewJSONHandler(decisionOut, nil)))
+	applyActuator(gw, *enforce, *txnFile)
+	srv := &http.Server{Addr: *listen, Handler: gw}
+	mode := "monitor"
+	if *enforce {
+		mode = "enforce"
+	}
 	go func() {
-		log.Printf("gurdy-proxy: monitor mode, %s -> %s, bundle %q, deploy %q, tenant %q, ledger %s, admin %s",
-			*listen, target, eval.Version, *deployID, *tenant, *ledgerDir, *adminAddr)
+		log.Printf("gurdy-proxy: %s mode, %s -> %s, bundle %q, deploy %q, tenant %q, ledger %s, admin %s",
+			mode, *listen, target, eval.Version, *deployID, *tenant, *ledgerDir, *adminAddr)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatal(err)
 		}
@@ -493,6 +503,8 @@ type gateway struct {
 	led       *ledger.Ledger
 	tenant    string
 	decisions *slog.Logger
+	mode      string // ledger.ModeMonitor or ModeEnforce; empty means monitor
+	txnFile   string // sidecar JWT; empty/"off" means do not read
 
 	mu      sync.RWMutex
 	autoTxn map[string]autoTok // coarse principal -> auto-minted txn (§4.3)
@@ -520,6 +532,10 @@ const autoRenew = time.Minute
 // Handler builds the monitor-mode gateway. Every request is forwarded
 // unmodified; inspection failure never drops traffic (NFR-3).
 func Handler(target *url.URL, store *policy.Store, identity *tis.TIS, led *ledger.Ledger, tenant string, decisions *slog.Logger) http.Handler {
+	return newHTTPGateway(target, store, identity, led, tenant, decisions)
+}
+
+func newHTTPGateway(target *url.URL, store *policy.Store, identity *tis.TIS, led *ledger.Ledger, tenant string, decisions *slog.Logger) *gateway {
 	g := newGateway(store, identity, led, tenant, decisions)
 	g.rp = httputil.NewSingleHostReverseProxy(target)
 	// http.DefaultTransport allows two idle connections per host. A sidecar
@@ -544,6 +560,50 @@ func Handler(target *url.URL, store *policy.Store, identity *tis.TIS, led *ledge
 	}
 	g.upstream = target
 	return g
+}
+
+func applyActuator(g *gateway, enforce bool, txnFile string) {
+	if enforce {
+		g.act = enforceActuator{}
+		g.mode = ledger.ModeEnforce
+	}
+	g.txnFile = resolveTxnFile(txnFile)
+}
+
+func resolveTxnFile(path string) string {
+	if path == "off" {
+		return ""
+	}
+	if path != "" {
+		return path
+	}
+	home := os.Getenv("GURDY_HOME")
+	if home == "" {
+		h, err := os.UserHomeDir()
+		if err != nil {
+			return ""
+		}
+		home = filepath.Join(h, ".gurdy")
+	}
+	return filepath.Join(home, "identity", "current.txn")
+}
+
+func (g *gateway) sidecarTxn() string {
+	if g.txnFile == "" {
+		return ""
+	}
+	b, err := os.ReadFile(g.txnFile)
+	if err != nil {
+		return ""
+	}
+	return string(bytes.TrimSpace(b))
+}
+
+func (g *gateway) policyMode() string {
+	if g.mode != "" {
+		return g.mode
+	}
+	return ledger.ModeMonitor
 }
 
 // newGateway is the only way a gateway comes into being. The Act stage is not
@@ -635,6 +695,7 @@ func (g *gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			r.Body = io.NopCloser(bytes.NewReader(body))
 			listing = mcp.IsToolsList(body)
 			tcs := mcp.ParseToolsCalls(body)
+			var blockedIDs []string
 			for _, tc := range tcs {
 				if tc.Name == "" {
 					calls = append(calls, g.indeterminate(r, "undecodable tools/call params"))
@@ -650,7 +711,13 @@ func (g *gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						Hash: sig.Hash, PathArgs: sig.PathArgs, URLArgs: sig.URLArgs,
 					}
 				}
-				calls = append(calls, g.decide(r, c, body))
+				callID, plan := g.decide(r, c, body)
+				if !plan.Forward {
+					blockedIDs = append(blockedIDs, tc.ID)
+					g.noteBlockedResponse(coarsePrincipal(r), callID, jsonRPCError(tc.ID))
+					continue
+				}
+				calls = append(calls, callID)
 			}
 			if len(tcs) == 0 {
 				// Not MCP. Hand the raw request to the registry: a model call
@@ -665,7 +732,23 @@ func (g *gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					// deliberately malformed payload is buying (§8.4).
 					calls = append(calls, g.indeterminate(r, "undecodable "+res.Action+" request"))
 				case ok:
-					calls = append(calls, g.decide(r, c, body))
+					callID, plan := g.decide(r, c, body)
+					if !plan.Forward {
+						payload := []byte(`{"error":"blocked by policy"}`)
+						w.Header().Set("Content-Type", "application/json")
+						w.WriteHeader(http.StatusForbidden)
+						w.Write(payload)
+						g.noteBlockedResponse(coarsePrincipal(r), callID, payload)
+						return
+					}
+					calls = append(calls, callID)
+				}
+			} else if len(blockedIDs) > 0 && len(calls) == 0 && !listing {
+				g.replyBlockedJSONRPC(w, tcs)
+				return
+			} else if len(blockedIDs) > 0 {
+				if rewritten := filterBlockedCalls(body, blockedSet(blockedIDs)); rewritten != nil {
+					replaceRequestBody(r, bytes.TrimRight(rewritten, "\n"))
 				}
 			}
 		}
@@ -801,6 +884,33 @@ func (g *gateway) recordResponse(coarse string, calls []string, rw *hashingWrite
 	}
 }
 
+func (g *gateway) noteBlockedResponse(coarse, callID string, payload []byte) {
+	n := int64(len(payload))
+	g.led.AppendResponse(g.partition(coarse), ledger.Record{
+		TS:       time.Now().UTC().Format(time.RFC3339Nano),
+		CallID:   callID,
+		RespHash: fmt.Sprintf("%x", sha256.Sum256(payload)),
+		Bytes:    &n,
+		Status:   http.StatusOK,
+	})
+}
+
+func (g *gateway) replyBlockedJSONRPC(w http.ResponseWriter, tcs []mcp.ToolCall) {
+	w.Header().Set("Content-Type", "application/json")
+	var payload []byte
+	if len(tcs) == 1 {
+		payload = jsonRPCError(tcs[0].ID)
+	} else {
+		elems := make([]json.RawMessage, 0, len(tcs))
+		for _, tc := range tcs {
+			elems = append(elems, jsonRPCError(tc.ID))
+		}
+		payload, _ = json.Marshal(elems)
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(payload)
+}
+
 // newCallID mints the join key between a decision and its response (§5.5).
 // Random rather than a counter: a counter restarts at zero while the chain it
 // writes into resumes, and a collision joins a response to the wrong call —
@@ -856,7 +966,7 @@ func (g *gateway) indeterminateCall(coarse, status, reason string) string {
 		TS: ts, CallID: callID, AssertionStatus: status,
 		Principal: "svc:" + coarse, PrincipalTier: ledger.TierCoarse,
 		Action: "http/request", Decision: string(policy.Indeterminate),
-		PolicyMode: ledger.ModeMonitor, ActionApplied: plan.Applied, FailModeApplied: plan.FailMode,
+		PolicyMode: g.policyMode(), ActionApplied: plan.Applied, FailModeApplied: plan.FailMode,
 		ResourceAttrs: map[string]string{"reason": reason}, BundleVer: ver,
 	})
 	g.decisions.Info("decision", "ts", ts, "decision", string(policy.Indeterminate),
@@ -865,22 +975,31 @@ func (g *gateway) indeterminateCall(coarse, status, reason string) string {
 }
 
 // decide adapts an HTTP request to the transport-agnostic decision path.
-func (g *gateway) decide(r *http.Request, c extract.Call, body []byte) string {
+func (g *gateway) decide(r *http.Request, c extract.Call, body []byte) (string, Plan) {
 	ctx := propagation.TraceContext{}.Extract(r.Context(), propagation.HeaderCarrier(r.Header))
-	return g.decideCall(ctx, r.Header.Get(TxnHeader), coarsePrincipal(r), c, body)
+	tok := r.Header.Get(TxnHeader)
+	if tok == "" {
+		tok = g.sidecarTxn()
+	}
+	return g.decideCall(ctx, tok, coarsePrincipal(r), c, body)
 }
 
-// decideCall runs identify → classify → decide → attest for one tool call and
-// returns the call_id of the record it wrote, which a transport that can see
-// the response uses to append the matching response record (§5.5).
-// The ledger is the system of record (FR-7); the slog stream is observability.
-func (g *gateway) decideCall(ctx context.Context, txnTok, coarse string, c extract.Call, body []byte) string {
+// decideCall runs identify → classify → decide → act → attest for one tool call
+// and returns the call_id of the record it wrote plus the Act plan. A transport
+// that can see the response uses the id to append the matching response record
+// (§5.5). When plan.Durable, the record is flushed before the caller may stop
+// traffic (record-before-effect).
+func (g *gateway) decideCall(ctx context.Context, txnTok, coarse string, c extract.Call, body []byte) (string, Plan) {
 	_, span := tracer.Start(ctx, "gurdy.decision", trace.WithSpanKind(trace.SpanKindInternal))
 	defer span.End()
 	// Live per-stage timing (internal/clock). Costs ~100ns against a ~300µs
 	// decision, and it is the only thing that can answer "how much of the
 	// latency is ours" in a deployment rather than in a benchmark.
 	defer clock.Decide.Time()()
+
+	if txnTok == "" {
+		txnTok = g.sidecarTxn()
+	}
 
 	// The extractor names the action (§5.3): mcp/tools_call, llm/completion,
 	// and whatever a pack adds later all arrive here identically. An
@@ -944,18 +1063,30 @@ func (g *gateway) decideCall(ctx context.Context, txnTok, coarse string, c extra
 	// observation (§8.3).
 	plan := g.act.Plan(res.Decision)
 	callID := newCallID()
-	attestDone := clock.Attest.Time()
-	g.led.Append(g.partition(coarse), ledger.Record{
+	rec := ledger.Record{
 		TS: ts, CallID: callID, TxnID: txnID, AssertionJTI: jti, AssertionStatus: status,
 		Principal: principal, PrincipalTier: tier,
 		AssertedPrincipal: assertedPrincipal, Lineage: lineage,
 		AssertedHumanActor: assertedActor, AssertedScope: assertedScope,
 		Tool: class.Tool, Action: class.Action, ResourceAttrs: attrs,
-		Decision: string(res.Decision), PolicyMode: ledger.ModeMonitor,
+		Decision: string(res.Decision), PolicyMode: g.policyMode(),
 		ActionApplied: plan.Applied, PolicyEffects: effects(res),
 		BundleVer: ev.Version, FailModeApplied: plan.FailMode,
 		ReqHash: ledger.HashBody(body),
-	})
+	}
+	attestDone := clock.Attest.Time()
+	if plan.Durable {
+		if err := g.led.AppendSync(g.partition(coarse), rec); err != nil {
+			// Cannot attest the stop, so we must not stop (record-before-effect,
+			// fail-open). The dropped/failed write is already a coverage gap.
+			plan = Plan{Forward: true, Applied: ledger.ActionFailedOpen, FailMode: ledger.FailOpen}
+			rec.ActionApplied = plan.Applied
+			rec.FailModeApplied = plan.FailMode
+			g.led.Append(g.partition(coarse), rec)
+		}
+	} else {
+		g.led.Append(g.partition(coarse), rec)
+	}
 	attestDone()
 	span.SetAttributes(
 		attribute.String("gurdy.tool", class.Tool),
@@ -985,10 +1116,11 @@ func (g *gateway) decideCall(ctx context.Context, txnTok, coarse string, c extra
 		"resource", resource,
 		"decision", string(res.Decision),
 		"action_applied", plan.Applied,
+		"policy_mode", g.policyMode(),
 		"policy_ids", res.IDs(),
 		"bundle_ver", ev.Version,
 	)
-	return callID
+	return callID, plan
 }
 
 // identify builds the per-call assertion and reports whether the SDK supplied

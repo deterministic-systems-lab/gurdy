@@ -325,7 +325,11 @@ func runCase(c Case, driver, proxyBin string) (problems []string) {
 	ledgerDir, stateDir := filepath.Join(dir, "l"), filepath.Join(dir, "s")
 	proxy := exec.Command(proxyBin,
 		"-upstream", upstream.URL, "-listen", listen, "-admin", admin,
-		"-ledger-dir", ledgerDir, "-state-dir", stateDir)
+		"-ledger-dir", ledgerDir, "-state-dir", stateDir,
+		// A leftover ~/.gurdy/identity/current.txn is not an SDK assertion.
+		// The corpus cases that require assertion_status=absent fail if the
+		// binary silently consumes one.
+		"-txn-file", "off")
 	var proxyLog bytes.Buffer
 	proxy.Stdout, proxy.Stderr = &proxyLog, &proxyLog
 	if err := proxy.Start(); err != nil {

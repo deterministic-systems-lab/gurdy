@@ -9,6 +9,56 @@ it starts, and from the flip onward it is the *only* narrative of the build that
 
 ---
 
+## 2026-09-18 — enforce coverage: batch rewrite and fail-open
+
+The coverage ratchet failed the PR at 80.9% against 83.1%. The new
+lines were the actuator, not untested old core. Tests now cover
+filterBlockedCalls, mixed-batch HTTP (which also found a
+Content-Length bug: rewriting the body left the original length and
+the reverse proxy refused the sibling), all-blocked JSON-RPC, and
+fail-open when AppendSync cannot attest. gurdy-conform passes
+`-txn-file off` so a leftover home sidecar cannot invent an assertion.
+
+---
+
+## 2026-09-18 — host install docs; Cursor is a host, not an author
+
+`docs/hosts.md` is the install path: build `gurdy-proxy`, then
+`adapters/connect.py --host cursor|claude|antigravity|chatgpt`. The
+Cursor IDE adapter was already in the tree. Claude Code, Antigravity,
+and Codex / ChatGPT desktop now share classify → `tools/call` →
+`gurdy-proxy`, with the deny JSON each runtime understands.
+
+chatgpt.com is documented as unconnectable — no local hook, no local
+MCP file. `--host chatgpt` writes `~/.codex` (desktop + CLI + IDE).
+
+An agent authorship trailer is an unverifiable provenance claim. Local
+`commit-msg` (`make hooks`) strips it before the object is written;
+`scripts/check-dco.sh` rejects it on pull requests. Naming an IDE as a
+host in install docs is not authorship.
+
+---
+
+## 2026-09-16 — local enforce, fleet, pack builder, console, adapters
+
+The capabilities that used to live only in a private overlay are in this
+tree.
+
+- **`-enforce`** is the local actuator (ADR-14). HTTP and stdio both stop
+  `decision=block` after a durable record. Monitor remains the default.
+- **`policy/`** generates Cedar from `controls.json`. The same pack
+  governs wrapped MCP and synthesized native calls.
+- **`fleet/`** ships verified ledger suffixes and pulls desired pack +
+  enforce. **`console/`** is the suggested Next.js management framework
+  that hosts those APIs.
+- **`adapters/`** is the drop-in seam. Cursor is the first host; the
+  contract is classify → `tools/call` → `gurdy-proxy`.
+
+Admin-API mutating routes are still localhost + CSRF only. That is the
+remaining Phase 2 security gate, not an enforcement gap in the actuator.
+
+---
+
 ## 2026-09-16 — no paid tier, and a new home
 
 Two changes, and only one of them is mechanical.

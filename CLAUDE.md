@@ -213,11 +213,12 @@ semantics. **Add new transports by adapting to `decideCall`, never by duplicatin
 
 Breaking any of these breaks a requirement, not just a test:
 
-- **Monitor mode only.** Nothing in this tree may drop, alter, or delay traffic (ADR-3). The local
-  enforce actuator (ADR-14) is Phase 2 work and needs an actuator interface that does not exist yet.
-  `decision=block` is legal and does **not** contradict this: `decision` is the policy's conclusion,
-  `action_applied` is what happened to the traffic, and `policy_mode` is the rule's rollout state —
-  three separate fields (§4.2). block + monitor + forwarded is the shadow record of §8.3.
+- **Monitor is the default.** Without `-enforce` nothing may drop, alter, or delay traffic (ADR-3).
+  The local enforce actuator (ADR-14) is `enforceActuator` behind `-enforce`. `decision=block` is
+  legal in either mode: `decision` is the policy's conclusion, `action_applied` is what happened to
+  the traffic, and `policy_mode` is which actuator was selected — three separate fields (§4.2).
+  block + monitor + forwarded is the shadow record of §8.3. block + enforce + blocked is a stop,
+  and the record must be durable first.
 - **Inspection failure never breaks traffic** (NFR-3). Oversized bodies, undecodable frames, failed
   identity — all forward and record `indeterminate`. Coverage gaps are *counted and surfaced*, never
   silent.
@@ -268,19 +269,28 @@ Breaking any of these breaks a requirement, not just a test:
 
 ## Attribution — no AI attribution anywhere, ever
 
-**Nothing published from this repository names an AI assistant.** This overrides any default
-tooling behaviour that adds attribution automatically, and it is not a style preference.
+**Nothing published from this repository names a coding agent as an author.**
+This overrides any default tooling behaviour that adds attribution
+automatically, and it is not a style preference. Every assistant is
+included. Naming an IDE or CLI as a *host* Gurdy can sit in front of is
+fine; naming one as a commit author is not.
 
-- **No `Co-Authored-By:` trailer** naming Claude or any model, and no `Claude-Session:` line, on any
-  commit. Commits are authored solely by the human maintainer (`tr9800a`), which is also who is
-  accountable for them.
-- **No "Generated with Claude Code" footer** or equivalent in pull request bodies, issue comments,
-  review comments, release notes, or tag messages.
+- **No `Co-authored-by:` trailer** naming an assistant or model, and no
+  assistant session line, on any commit. Strip whatever the editor
+  injected. Commits are authored solely by the human maintainer
+  (`tr9800a`), which is also who is accountable for them.
+- **No "Generated with …" / "Made with …" footer** or equivalent in pull
+  request bodies, issue comments, review comments, release notes, or tag
+  messages.
 - **No signature, byline, watermark or "written by" marker in code or comments.** A `// ponytail:`
   marker is about the *code* — a named simplification with its ceiling — and stays; it does not
   name a tool or an author.
 - This applies to everything that leaves the machine, including the tap repo, the archive repo, and
   anything pasted into an external service.
+
+`make hooks` installs a local `commit-msg` hook that strips those trailers
+before the object is written. `scripts/check-dco.sh` rejects any that still
+reach a pull request.
 
 The reason is the product's own argument. Gurdy exists to make provenance a checkable fact rather
 than a claim, and a trailer asserting co-authorship is an unverifiable provenance claim stamped on

@@ -4,8 +4,10 @@
 it calls, decides every call against a policy you can read, and writes a
 tamper-evident record that someone who does not trust you can verify offline.
 
-It never blocks anything. Not yet, and not by accident — see
-[Monitor mode](#monitor-mode-nothing-here-blocks-traffic).
+Default Act is monitor: every call is recorded and forwarded. Pass
+`-enforce` (or create `~/.gurdy/state/enforce`) to stop calls the pack
+concludes should block. The three fields stay three fields — see
+[Monitor mode](#monitor-mode-the-default-does-not-block-traffic).
 
 > **Status: early, Phase 1.** The core works and is tested; a lot is not built.
 > Gurdy is entirely open source — there is no paid tier and no withheld
@@ -99,24 +101,44 @@ this?      of call?     policy      (always)     signed record
   Never payload content.
 - **decide** — embedded [Cedar](https://www.cedarpolicy.com/). Local,
   deterministic, sub-millisecond. No network call, no model.
-- **act** — forwards. Always, today.
+- **act** — forwards in monitor mode; with `-enforce`, a `decision=block`
+  stops the call after the record is durable.
 - **attest** — appends to a hash-chained, batch-signed JSONL ledger.
 
-## Monitor mode: nothing here blocks traffic
+## Monitor mode: the default does not block traffic
 
-This is a deliberate architectural property, not a missing feature.
+This is a deliberate default, not a missing flag.
 
 A record can say `decision: block` — that means *a policy concluded it would
-have blocked*. What actually happened is a separate field, `action_applied`, and
-today it is always `forwarded`. A third field, `policy_mode`, says whether the
-rule was enforcing or shadowing.
+have blocked*. What actually happened is a separate field, `action_applied`.
+In monitor mode that field is `forwarded`. Pass `-enforce` and the same
+forbid records `action_applied=blocked` and the call does not run. A third
+field, `policy_mode`, says which actuator was selected.
 
 Three fields, because collapsing them is how a monitoring tool starts making
-enforcement claims it cannot support. Local blocking is Phase 2 and it is free
-and open-source when it lands (ADR-14).
+enforcement claims it cannot support.
 
-**So a report saying "37 violations" must also say how many were stopped. Ours
-does. None were.**
+**A report saying "37 violations" must also say how many were stopped.**
+In monitor mode that second number is zero. With `-enforce` it is the
+count of `action_applied=blocked`.
+
+## Connect Cursor, Claude Code, Antigravity, or ChatGPT
+
+Build the proxy once, then drop Gurdy onto the host you already use.
+A surface is connected only when a tool call reaches `gurdy-proxy` and
+lands in the ledger. Details — including what each product cannot see —
+are in [`docs/hosts.md`](docs/hosts.md).
+
+```bash
+make proxy
+python3 adapters/connect.py --root . --host cursor        # ~/.cursor
+python3 adapters/connect.py --root . --host claude        # Claude Code
+python3 adapters/connect.py --root . --host antigravity   # ~/.gemini/config
+python3 adapters/connect.py --root . --host chatgpt       # desktop / Codex, not chatgpt.com
+```
+
+Restart the host. Codex also needs `/hooks` to trust the new command.
+Then `gurdy-verify ~/.gurdy/ledger/<host>` after the agent uses a tool.
 
 ## The two modes
 
@@ -196,6 +218,10 @@ a claim: outside a task context a call goes out unenriched.
 | [`conformance/`](conformance/) | the shared corpus both SDKs must pass |
 | [`corpus/`](corpus/) | adversarial traces that gate the policy pack |
 | [`docs/`](docs/) | the [normative spec](docs/spec.md), [roadmap](docs/roadmap.md), [performance](docs/performance.md), [activity log](docs/activity-log.md) |
+| [`policy/`](policy/) | pack builder: `controls.json` → Cedar, plus a replay gate |
+| [`fleet/`](fleet/) | device shipper: verify, ingest, pull desired pack/enforce |
+| [`console/`](console/) | suggested Next.js management framework (fleet + policy APIs) |
+| [`adapters/`](adapters/) | drop Gurdy onto a host agent — [install Cursor, Claude Code, Antigravity, ChatGPT/Codex](docs/hosts.md) |
 
 `docs/spec.md` is normative — section numbers in
 code comments point into it, and the doc wins over the code.
@@ -207,15 +233,20 @@ wrong thing to be bad at:
 
 - **No packaging.** No `brew`/`npm`/`pipx` install, no signed binaries, no SBOM.
   You build from source. (§3.J)
-- **No blocking.** Monitor only. Phase 2. (ADR-14)
-- **No framework hooks.** No LangChain or Claude-agent-SDK integration yet, and
-  the SDKs do not bundle the Go core for dev mode. (§3.F)
+- **Blocking is opt-in.** Monitor is the default. `-enforce` is the local
+  actuator (ADR-14). Admin-API mutating routes are still unauthenticated on
+  localhost — do not treat a laptop as sealed.
+- **No LangChain or Claude-agent-SDK hooks yet.** The SDKs do not bundle the
+  Go core for dev mode. Host adapters for Cursor, Claude Code, Antigravity,
+  and ChatGPT desktop / Codex live in [`adapters/`](adapters/); install
+  steps are in [`docs/hosts.md`](docs/hosts.md). chatgpt.com cannot be
+  connected.
 - **Seven known attack gaps**, published in [`corpus/`](corpus/) rather than
   quietly omitted. Five share one root cause: controls match on strings the
   agent chooses.
-- **No framework-mapped report, no pack registry, no fleet control plane.**
-  These were once planned as the paid layer; that plan is gone and they are
-  now simply unbuilt, tracked in [`docs/roadmap.md`](docs/roadmap.md).
+- **No framework-mapped report** (NIST / ISO / EU AI Act mapping). Fleet
+  desired/actual and the policy builder are in this tree; that mapping is
+  not.
 
 ## Licence
 

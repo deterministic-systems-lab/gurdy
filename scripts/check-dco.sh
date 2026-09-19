@@ -32,13 +32,23 @@ fi
 
 fail=0
 n=0
+# Trailer or footer that credits a coding agent as an author. Host product
+# names in the subject or body ("Cursor adapter") are fine; a Co-authored-by
+# line is not.
+agent_trailer='^(Co-authored-by:.*(Cursor|Claude|ChatGPT|Copilot|Gemini|Codex)|(Cursor-Session|Claude-Session):)|Generated with (Cursor|Claude)'
 for c in $commits; do
   n=$((n + 1))
   author=$(git show -s --format='%ae' "$c" | tr '[:upper:]' '[:lower:]')
   subject=$(git show -s --format='%s' "$c")
+  body=$(git show -s --format='%B' "$c")
+  if printf '%s\n' "$body" | grep -qiE "$agent_trailer"; then
+    echo "FAIL  ${c:0:9}  $subject"
+    echo "      commit names a coding agent as an author; strip the trailer"
+    fail=1
+  fi
   # A commit may carry several sign-offs (DCO (c), a patch passed along). At
   # least one must be the author's.
-  if git show -s --format='%B' "$c" \
+  if printf '%s\n' "$body" \
      | grep -i '^Signed-off-by:' \
      | grep -qiF "<$author>"; then
     continue
@@ -53,7 +63,7 @@ if [ $fail -ne 0 ]; then
 
 Fix with:
   git rebase --signoff <base-branch>     # sign off everything on this branch
-  git commit --amend -s --no-edit        # just the tip
+  git commit --amend -s                  # just the tip; delete any agent Co-authored-by line
 
 Then force-push. See CONTRIBUTING.md — it is a one-line certification, not a CLA.
 EOF
