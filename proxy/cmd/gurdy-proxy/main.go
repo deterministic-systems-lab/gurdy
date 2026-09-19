@@ -748,7 +748,7 @@ func (g *gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			} else if len(blockedIDs) > 0 {
 				if rewritten := filterBlockedCalls(body, blockedSet(blockedIDs)); rewritten != nil {
-					r.Body = io.NopCloser(bytes.NewReader(bytes.TrimRight(rewritten, "\n")))
+					replaceRequestBody(r, bytes.TrimRight(rewritten, "\n"))
 				}
 			}
 		}

@@ -138,6 +138,136 @@ func TestSidecarTxnEnrichesAssertion(t *testing.T) {
 	}
 }
 
+func TestApplyActuatorAndTxnFile(t *testing.T) {
+	h := newHarness(t)
+	g := newGateway(h.store, h.tis, h.led, "test-tenant", slogTo(h.decisionLog))
+	applyActuator(g, false, "off")
+	if _, ok := g.act.(monitorActuator); !ok {
+		t.Fatalf("monitor is the default actuator, got %T", g.act)
+	}
+	if g.txnFile != "" {
+		t.Fatalf("-txn-file off must disable the sidecar, got %q", g.txnFile)
+	}
+	applyActuator(g, true, "/tmp/current.txn")
+	if _, ok := g.act.(enforceActuator); !ok {
+		t.Fatalf("enforce: got %T", g.act)
+	}
+	if g.mode != ledger.ModeEnforce || g.txnFile != "/tmp/current.txn" {
+		t.Fatalf("mode=%q txn=%q", g.mode, g.txnFile)
+	}
+}
+
+func TestResolveTxnFile(t *testing.T) {
+	if resolveTxnFile("off") != "" {
+		t.Fatal(`"off" must disable`)
+	}
+	if resolveTxnFile("/explicit.txn") != "/explicit.txn" {
+		t.Fatal("explicit path is used as-is")
+	}
+	t.Setenv("GURDY_HOME", "/tmp/gurdy-home")
+	got := resolveTxnFile("")
+	if got != "/tmp/gurdy-home/identity/current.txn" {
+		t.Fatalf("empty flag + GURDY_HOME: %q", got)
+	}
+}
+
+func TestHTTPEnforceBatchDropsOnlyTheBlockedSibling(t *testing.T) {
+	h := newHarness(t)
+	h.store.Swap(blockingPack(t))
+	var saw string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		saw = string(b)
+		w.Write([]byte(`{"ok":true}`))
+	}))
+	defer upstream.Close()
+	target, _ := url.Parse(upstream.URL)
+	g := newHTTPGateway(target, h.store, h.tis, h.led, "test-tenant", slogTo(h.decisionLog))
+	applyActuator(g, true, "off")
+	proxy := httptest.NewServer(g)
+	defer proxy.Close()
+
+	batch := `[{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"read_file","arguments":{"path":"/home/u/.ssh/id_rsa"}}},{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"read_file","arguments":{"path":"/ok.txt"}}}]`
+	resp, err := http.Post(proxy.URL, "application/json", strings.NewReader(batch))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if !strings.Contains(saw, `"id":2`) {
+		t.Fatalf("allowed sibling never reached upstream: %q", saw)
+	}
+	if strings.Contains(saw, `"id":1`) {
+		t.Fatalf("blocked call was forwarded: %q", saw)
+	}
+}
+
+func TestHTTPEnforceAllBlockedNeverTouchesUpstream(t *testing.T) {
+	h := newHarness(t)
+	h.store.Swap(blockingPack(t))
+	var saw string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		saw = string(b)
+		w.Write([]byte(`{"ok":true}`))
+	}))
+	defer upstream.Close()
+	target, _ := url.Parse(upstream.URL)
+	g := newHTTPGateway(target, h.store, h.tis, h.led, "test-tenant", slogTo(h.decisionLog))
+	applyActuator(g, true, "off")
+	proxy := httptest.NewServer(g)
+	defer proxy.Close()
+
+	batch := `[{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"read_file","arguments":{"path":"/home/u/.ssh/a"}}},{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"read_file","arguments":{"path":"/home/u/.ssh/b"}}}]`
+	resp, err := http.Post(proxy.URL, "application/json", strings.NewReader(batch))
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if saw != "" {
+		t.Fatalf("upstream saw an all-blocked batch: %q", saw)
+	}
+	if !strings.Contains(string(out), "blocked by policy") {
+		t.Fatalf("client: %s", out)
+	}
+}
+
+func TestEnforceFailOpenWhenRecordIsNotDurable(t *testing.T) {
+	h := newHarness(t)
+	h.store.Swap(blockingPack(t))
+	if err := h.led.Close(); err != nil {
+		t.Fatal(err)
+	}
+	var saw string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		saw = string(b)
+		w.Write([]byte(`{"ok":true}`))
+	}))
+	defer upstream.Close()
+	target, _ := url.Parse(upstream.URL)
+	g := newHTTPGateway(target, h.store, h.tis, h.led, "test-tenant", slogTo(h.decisionLog))
+	applyActuator(g, true, "off")
+	proxy := httptest.NewServer(g)
+	defer proxy.Close()
+
+	resp, err := http.Post(proxy.URL, "application/json", strings.NewReader(credReadCall))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if saw == "" {
+		t.Fatal("a block that could not be attested must fail open")
+	}
+	rec := lastLogDecision(t, h.decisionLog.String())
+	if rec["action_applied"] != ledger.ActionFailedOpen {
+		t.Fatalf("want failed-open, got %v", rec)
+	}
+	if rec["decision"] != "block" {
+		t.Fatalf("policy conclusion is still block: %v", rec["decision"])
+	}
+}
+
 func lastLogDecision(t *testing.T, logged string) map[string]any {
 	t.Helper()
 	var last map[string]any

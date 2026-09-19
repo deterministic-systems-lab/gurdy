@@ -9,6 +9,18 @@ it starts, and from the flip onward it is the *only* narrative of the build that
 
 ---
 
+## 2026-09-18 — enforce coverage: batch rewrite and fail-open
+
+The coverage ratchet failed the PR at 80.9% against 83.1%. The new
+lines were the actuator, not untested old core. Tests now cover
+filterBlockedCalls, mixed-batch HTTP (which also found a
+Content-Length bug: rewriting the body left the original length and
+the reverse proxy refused the sibling), all-blocked JSON-RPC, and
+fail-open when AppendSync cannot attest. gurdy-conform passes
+`-txn-file off` so a leftover home sidecar cannot invent an assertion.
+
+---
+
 ## 2026-09-18 — host install docs; Cursor is a host, not an author
 
 `docs/hosts.md` is the install path: build `gurdy-proxy`, then

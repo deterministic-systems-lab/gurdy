@@ -3,6 +3,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"io"
+	"net/http"
+	"strconv"
 )
 
 // jsonRPCError is the protocol-level denial the shim/HTTP path writes when
@@ -68,6 +71,14 @@ func blockedID(raw []byte, blocked map[string]bool) bool {
 		id = ""
 	}
 	return blocked[id]
+}
+
+func replaceRequestBody(r *http.Request, body []byte) {
+	r.Body = io.NopCloser(bytes.NewReader(body))
+	r.ContentLength = int64(len(body))
+	if r.Header != nil {
+		r.Header.Set("Content-Length", strconv.FormatInt(r.ContentLength, 10))
+	}
 }
 
 func blockedSet(ids []string) map[string]bool {
