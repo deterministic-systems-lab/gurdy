@@ -27,9 +27,10 @@ def merge_mcp(existing: dict, generated: dict) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", type=Path, required=True)
+    ap.add_argument("--home", type=Path, default=Path.home())
     args = ap.parse_args()
 
-    home = Path.home()
+    home = args.home
     cursor = home / ".cursor"
     cursor.mkdir(parents=True, exist_ok=True)
     for sub in ("ledger", "state", "identity"):

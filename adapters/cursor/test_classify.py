@@ -108,6 +108,16 @@ def main() -> int:
         "http_fetch",
         "sudo wget",
     )
+    eq(
+        classify(
+            {
+                "tool_name": "Edit",
+                "tool_input": {"file_path": "/workspace/a.md"},
+            }
+        ),
+        {"tool": "write_file", "arguments": {"path": "/workspace/a.md"}},
+        "claude edit",
+    )
     print("ok")
     return 0
 

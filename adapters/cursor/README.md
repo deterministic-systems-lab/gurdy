@@ -5,10 +5,13 @@ never reach `gurdy-proxy` on the wire; the hooks in `hooks/` rewrite
 each call as `mcp/tools_call` and the proxy decides. Stdio MCP servers
 use the same pack through `wrap.sh`.
 
+Full install notes for Cursor and the other hosts:
+[docs/hosts.md](../../docs/hosts.md).
+
 ```bash
 # from the Gurdy repo root
-go build -o bin/gurdy-proxy ./proxy/cmd/gurdy-proxy
-python3 adapters/cursor/install.py --root .
+make proxy
+python3 adapters/connect.py --root . --host cursor
 # restart Cursor
 ```
 
@@ -31,7 +34,7 @@ Add a stdio server:
 
 ```bash
 python3 policy/pack.py add-mcp filesystem -- npx -y @modelcontextprotocol/server-filesystem "$HOME"
-python3 adapters/cursor/install.py --root .
+python3 adapters/connect.py --root . --host cursor
 ```
 
 HTTP or plugin channels that Cursor does not send through a local

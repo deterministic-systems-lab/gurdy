@@ -82,6 +82,8 @@ def mint_if_possible(conversation_id: str, email: str, server: str) -> str | Non
     candidates = []
     if server:
         candidates.append(STATE_DIR / f"tis-{server}.sock")
+    host = os.environ.get("GURDY_HOST") or "cursor"
+    candidates.append(STATE_DIR / f"tis-{host}.sock")
     candidates.append(STATE_DIR / "tis-cursor.sock")
     candidates.append(STATE_DIR / "tis.sock")
     body = json.dumps(

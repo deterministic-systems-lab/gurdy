@@ -17,8 +17,19 @@ from __future__ import annotations
 
 import os
 import re
+import sys
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+
+_COMMON = Path(__file__).resolve().parents[2] / "common"
+if _COMMON.is_dir() and str(_COMMON) not in sys.path:
+    sys.path.insert(0, str(_COMMON))
+try:
+    from normalize import normalize as _normalize
+except ImportError:
+    def _normalize(payload: dict[str, Any]) -> dict[str, Any]:
+        return payload
 
 from controls import alias_for_command, destructive_shell_re, first_url, is_credential_path
 
@@ -36,6 +47,7 @@ _PATH_TOKEN = re.compile(r"(?:^|[\s=])((?:~|/|\./)[^\s;|&`'\"<>]+)")
 
 def classify(payload: dict[str, Any]) -> dict[str, Any] | None:
     """Return {tool, arguments} for gurdy-proxy, or None to skip."""
+    payload = _normalize(payload)
     event = (payload.get("hook_event_name") or "").lower()
     tool = (payload.get("tool_name") or "").strip()
     if tool.upper().startswith("MCP:") or event in {
@@ -65,7 +77,14 @@ def classify(payload: dict[str, Any]) -> dict[str, Any] | None:
             "arguments": {"path": _expand(path)} if path else {},
         }
 
-    if tool.lower() in {"write", "strreplace", "searchreplace", "editnotebook"}:
+    if tool.lower() in {
+        "write",
+        "strreplace",
+        "searchreplace",
+        "editnotebook",
+        "edit",
+        "notebookedit",
+    }:
         path = _path_of(payload)
         if not path:
             return None
@@ -84,7 +103,7 @@ def classify(payload: dict[str, Any]) -> dict[str, Any] | None:
             return {"tool": "read_file", "arguments": {"path": _expand(path)}}
         return {"tool": tool.lower(), "arguments": {}}
 
-    if event == "beforeshellexecution" or tool.lower() == "shell":
+    if event == "beforeshellexecution" or tool.lower() in {"shell", "bash"}:
         return _from_shell(payload.get("command") or _shell_command(payload) or "")
 
     # Unknown native tool with a path: still a tools/call so the pack sees it.

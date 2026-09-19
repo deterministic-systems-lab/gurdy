@@ -31,7 +31,8 @@ here, not what is permitted:
   - the Gurdy SDKs (Python, TypeScript) and the shared conformance suite
   - gurdy-report, the local report (BR-11)
   - fleet shipper and the suggested management console
-  - host-agent adapters (Cursor ships; the contract is in adapters/)
+  - host-agent adapters (Cursor, Claude Code, Antigravity, Codex /
+    ChatGPT desktop; the contract is in adapters/)
 
 Two things the old text named as paid, for anyone who read this file before:
 fleet coordination and the framework-mapped evidence report. Fleet

@@ -122,6 +122,24 @@ enforcement claims it cannot support.
 In monitor mode that second number is zero. With `-enforce` it is the
 count of `action_applied=blocked`.
 
+## Connect Cursor, Claude Code, Antigravity, or ChatGPT
+
+Build the proxy once, then drop Gurdy onto the host you already use.
+A surface is connected only when a tool call reaches `gurdy-proxy` and
+lands in the ledger. Details — including what each product cannot see —
+are in [`docs/hosts.md`](docs/hosts.md).
+
+```bash
+make proxy
+python3 adapters/connect.py --root . --host cursor        # ~/.cursor
+python3 adapters/connect.py --root . --host claude        # Claude Code
+python3 adapters/connect.py --root . --host antigravity   # ~/.gemini/config
+python3 adapters/connect.py --root . --host chatgpt       # desktop / Codex, not chatgpt.com
+```
+
+Restart the host. Codex also needs `/hooks` to trust the new command.
+Then `gurdy-verify ~/.gurdy/ledger/<host>` after the agent uses a tool.
+
 ## The two modes
 
 **stdio shim** — wraps a local MCP server, zero infrastructure. What you just
@@ -203,7 +221,7 @@ a claim: outside a task context a call goes out unenriched.
 | [`policy/`](policy/) | pack builder: `controls.json` → Cedar, plus a replay gate |
 | [`fleet/`](fleet/) | device shipper: verify, ingest, pull desired pack/enforce |
 | [`console/`](console/) | suggested Next.js management framework (fleet + policy APIs) |
-| [`adapters/`](adapters/) | drop Gurdy onto a host agent; Cursor ships first |
+| [`adapters/`](adapters/) | drop Gurdy onto a host agent — [install Cursor, Claude Code, Antigravity, ChatGPT/Codex](docs/hosts.md) |
 
 `docs/spec.md` is normative — section numbers in
 code comments point into it, and the doc wins over the code.
@@ -219,8 +237,10 @@ wrong thing to be bad at:
   actuator (ADR-14). Admin-API mutating routes are still unauthenticated on
   localhost — do not treat a laptop as sealed.
 - **No LangChain or Claude-agent-SDK hooks yet.** The SDKs do not bundle the
-  Go core for dev mode. A Cursor adapter and a generic adapter contract live
-  in [`adapters/`](adapters/).
+  Go core for dev mode. Host adapters for Cursor, Claude Code, Antigravity,
+  and ChatGPT desktop / Codex live in [`adapters/`](adapters/); install
+  steps are in [`docs/hosts.md`](docs/hosts.md). chatgpt.com cannot be
+  connected.
 - **Seven known attack gaps**, published in [`corpus/`](corpus/) rather than
   quietly omitted. Five share one root cause: controls match on strings the
   agent chooses.

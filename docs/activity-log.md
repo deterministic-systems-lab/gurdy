@@ -9,6 +9,25 @@ it starts, and from the flip onward it is the *only* narrative of the build that
 
 ---
 
+## 2026-09-18 — host install docs; Cursor is a host, not an author
+
+`docs/hosts.md` is the install path: build `gurdy-proxy`, then
+`adapters/connect.py --host cursor|claude|antigravity|chatgpt`. The
+Cursor IDE adapter was already in the tree. Claude Code, Antigravity,
+and Codex / ChatGPT desktop now share classify → `tools/call` →
+`gurdy-proxy`, with the deny JSON each runtime understands.
+
+chatgpt.com is documented as unconnectable — no local hook, no local
+MCP file. `--host chatgpt` writes `~/.codex` (desktop + CLI + IDE).
+
+The no-AI-attribution rule now names Cursor explicitly. An agent
+authorship trailer is an unverifiable provenance claim. Local
+`commit-msg` (`make hooks`) strips it before the object is written;
+`scripts/check-dco.sh` rejects it on pull requests. Naming the IDE as a
+host in install docs is not authorship.
+
+---
+
 ## 2026-09-16 — local enforce, fleet, pack builder, console, adapters
 
 The capabilities that used to live only in a private overlay are in this

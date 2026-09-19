@@ -269,19 +269,29 @@ Breaking any of these breaks a requirement, not just a test:
 
 ## Attribution — no AI attribution anywhere, ever
 
-**Nothing published from this repository names an AI assistant.** This overrides any default
-tooling behaviour that adds attribution automatically, and it is not a style preference.
+**Nothing published from this repository names a coding agent as an author.**
+This overrides any default tooling behaviour that adds attribution
+automatically, and it is not a style preference. Cursor, Claude, and every
+other assistant are included. Naming Cursor as a *host* Gurdy can sit in
+front of is fine; naming it as a commit author is not.
 
-- **No `Co-Authored-By:` trailer** naming Claude or any model, and no `Claude-Session:` line, on any
-  commit. Commits are authored solely by the human maintainer (`tr9800a`), which is also who is
+- **No `Co-authored-by:` trailer** naming Cursor, Claude, or any model, and
+  no `Cursor-Session:` or `Claude-Session:` line, on any commit. The default
+  editor insert is `Co-authored-by: Cursor <…>` — strip it. Commits are
+  authored solely by the human maintainer (`tr9800a`), which is also who is
   accountable for them.
-- **No "Generated with Claude Code" footer** or equivalent in pull request bodies, issue comments,
-  review comments, release notes, or tag messages.
+- **No "Generated with Cursor"** / **"Generated with Claude Code"** footer or
+  equivalent in pull request bodies, issue comments, review comments, release
+  notes, or tag messages.
 - **No signature, byline, watermark or "written by" marker in code or comments.** A `// ponytail:`
   marker is about the *code* — a named simplification with its ceiling — and stays; it does not
   name a tool or an author.
 - This applies to everything that leaves the machine, including the tap repo, the archive repo, and
   anything pasted into an external service.
+
+`make hooks` installs a local `commit-msg` hook that strips those trailers
+before the object is written. `scripts/check-dco.sh` rejects any that still
+reach a pull request.
 
 The reason is the product's own argument. Gurdy exists to make provenance a checkable fact rather
 than a claim, and a trailer asserting co-authorship is an unverifiable provenance claim stamped on

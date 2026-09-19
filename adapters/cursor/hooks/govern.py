@@ -28,9 +28,28 @@ from root import find_proxy, repo_root
 
 ROOT = repo_root()
 PROXY = find_proxy(ROOT)
+TXN_FILE = IDENTITY_DIR / "current.txn"
+
+
+def host_name() -> str:
+    return os.environ.get("GURDY_HOST") or "cursor"
+
+
+def ledger_dir() -> Path:
+    return Path(
+        os.environ.get("GURDY_HOST_LEDGER")
+        or os.environ.get("GURDY_CURSOR_LEDGER")
+        or (GURDY_HOME / "ledger" / host_name())
+    )
+
+
+def tis_sock() -> Path:
+    return STATE_DIR / f"tis-{host_name()}.sock"
+
+
+# Kept for scripts that imported the old module-level paths.
 LEDGER_DIR = Path(os.environ.get("GURDY_CURSOR_LEDGER", GURDY_HOME / "ledger" / "cursor"))
 TIS_SOCK = STATE_DIR / "tis-cursor.sock"
-TXN_FILE = IDENTITY_DIR / "current.txn"
 
 
 def enforce_on() -> bool:
@@ -39,15 +58,25 @@ def enforce_on() -> bool:
     return env or (STATE_DIR / "enforce").is_file()
 
 
-def govern(payload: dict[str, Any]) -> dict[str, Any]:
+def decide_payload(payload: dict[str, Any]) -> tuple[str, dict[str, Any] | None]:
+    """Return (decision, call). decision is skip when classify declines."""
     call = classify(payload)
     if call is None:
+        return "skip", None
+    return _decide(call, payload), call
+
+
+def govern(payload: dict[str, Any]) -> dict[str, Any]:
+    decision, call = decide_payload(payload)
+    if decision == "skip" or call is None:
         return {"permission": "allow"}
-    decision = _decide(call, payload)
     if enforce_on() and decision == "block":
         return {
             "permission": "deny",
-            "user_message": "Gurdy policy blocked this call (see ~/.gurdy/ledger/cursor).",
+            "user_message": (
+                f"Gurdy policy blocked this call "
+                f"(see ~/.gurdy/ledger/{host_name()})."
+            ),
             "agent_message": (
                 f"Blocked by Gurdy pack: {call.get('tool')} "
                 f"{(call.get('arguments') or {}).get('path', '')}".strip()
@@ -66,7 +95,9 @@ def _decide(call: dict[str, Any], payload: dict[str, Any]) -> str:
         "params": {"name": call["tool"], "arguments": call.get("arguments") or {}},
     }
     line = json.dumps(frame, separators=(",", ":")) + "\n"
-    LEDGER_DIR.mkdir(parents=True, exist_ok=True)
+    led = ledger_dir()
+    sock = tis_sock()
+    led.mkdir(parents=True, exist_ok=True)
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     IDENTITY_DIR.mkdir(parents=True, exist_ok=True)
     os.chmod(STATE_DIR, 0o700)
@@ -78,11 +109,11 @@ def _decide(call: dict[str, Any], payload: dict[str, Any]) -> str:
         "-deploy-id",
         os.environ.get("GURDY_DEPLOY_ID") or os.uname().nodename.split(".")[0],
         "-ledger-dir",
-        str(LEDGER_DIR),
+        str(led),
         "-state-dir",
         str(STATE_DIR),
         "-tis-socket",
-        str(TIS_SOCK),
+        str(sock),
         "-txn-file",
         str(TXN_FILE),
         "-policy",
@@ -91,7 +122,7 @@ def _decide(call: dict[str, Any], payload: dict[str, Any]) -> str:
     if enforce_on():
         argv.append("-enforce")
     argv.extend(["--", "cat"])
-    lock_path = STATE_DIR / "cursor.lock"
+    lock_path = STATE_DIR / f"{host_name()}.lock"
     with open(lock_path, "a", encoding="utf-8") as lf:
         fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
         try:
@@ -104,10 +135,10 @@ def _decide(call: dict[str, Any], payload: dict[str, Any]) -> str:
         except OSError:
             return "indeterminate"
         try:
-            _wait_sock(TIS_SOCK, 1.0)
+            _wait_sock(sock, 1.0)
             conv = str(payload.get("conversation_id") or "unknown")
             email = str(payload.get("user_email") or "")
-            tok = mint_if_possible(conv, email, "cursor")
+            tok = mint_if_possible(conv, email, host_name())
             if tok:
                 (IDENTITY_DIR / f"{conv}.txn").write_text(tok, encoding="utf-8")
                 TXN_FILE.write_text(tok, encoding="utf-8")

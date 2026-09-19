@@ -8,6 +8,17 @@ shape so the same Cedar pack decides every call.
 This directory is how Gurdy sits on top of agentic tooling without
 becoming that tooling.
 
+Step-by-step install for each product:
+**[docs/hosts.md](../docs/hosts.md)**.
+
+```bash
+make proxy
+python3 adapters/connect.py --root . --host cursor
+python3 adapters/connect.py --root . --host claude
+python3 adapters/connect.py --root . --host antigravity
+python3 adapters/connect.py --root . --host chatgpt
+```
+
 ## Contract
 
 An adapter must:
@@ -30,20 +41,27 @@ Identity is optional. If the host can mint a Gurdy transaction token,
 write it to `$GURDY_HOME/identity/current.txn` and the proxy will enrich
 the record. Observed `principal` stays what the proxy saw.
 
-## Shipping adapter
+## Shipping adapters
 
-| Path | Host |
-|---|---|
-| [`cursor/`](cursor/) | Cursor IDE: native Read/Write/Shell hooks plus stdio MCP wrap |
+| Path | Host | Config the installer writes |
+|---|---|---|
+| [`cursor/`](cursor/) | Cursor IDE | `~/.cursor/hooks.json`, `~/.cursor/mcp.json` |
+| [`claude/`](claude/) | Claude Code | `~/.claude/settings.json`, `~/.claude.json` |
+| [`antigravity/`](antigravity/) | Antigravity IDE / CLI | `~/.gemini/config/hooks.json`, `mcp_config.json` |
+| [`codex/`](codex/) | ChatGPT desktop, Codex CLI, Codex IDE | `~/.codex/hooks.json`, `~/.codex/config.toml` |
 
-To add another host, copy `cursor/` and replace only the event names,
-payload field names, and the deny response the runtime understands.
-Keep `classify` → synthesized `tools/call` → `gurdy-proxy`.
+chatgpt.com has no local hook or MCP file. `--host chatgpt` installs
+Codex/desktop, not the browser product.
+
+To add another host, copy a thin entry under this directory and keep
+`classify` → synthesized `tools/call` → `gurdy-proxy`. Shared normalize
+and deny formatting live in [`common/`](common/).
 
 Environment every adapter should honor:
 
 | Variable | Role |
 |---|---|
+| `GURDY_HOST` | ledger partition name (`cursor`, `claude`, …) |
 | `GURDY_TENANT` | ledger partition tenant (default `local`) |
 | `GURDY_POLICY` | Cedar file, if you are not using the pulled pack |
 | `GURDY_ENFORCE` | `1` enables the local block actuator |

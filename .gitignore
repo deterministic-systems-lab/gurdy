@@ -35,3 +35,4 @@ console/bin/gurdy-*-linux-amd64
 adapters/cursor/mcp.json
 adapters/cursor/mcp.local.json
 adapters/cursor/hooks.json
+adapters/.tmp-connect-home/
