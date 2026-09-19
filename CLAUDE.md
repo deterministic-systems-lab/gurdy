@@ -271,18 +271,17 @@ Breaking any of these breaks a requirement, not just a test:
 
 **Nothing published from this repository names a coding agent as an author.**
 This overrides any default tooling behaviour that adds attribution
-automatically, and it is not a style preference. Cursor, Claude, and every
-other assistant are included. Naming Cursor as a *host* Gurdy can sit in
-front of is fine; naming it as a commit author is not.
+automatically, and it is not a style preference. Every assistant is
+included. Naming an IDE or CLI as a *host* Gurdy can sit in front of is
+fine; naming one as a commit author is not.
 
-- **No `Co-authored-by:` trailer** naming Cursor, Claude, or any model, and
-  no `Cursor-Session:` or `Claude-Session:` line, on any commit. The default
-  editor insert is `Co-authored-by: Cursor <…>` — strip it. Commits are
-  authored solely by the human maintainer (`tr9800a`), which is also who is
-  accountable for them.
-- **No "Generated with Cursor"** / **"Generated with Claude Code"** footer or
-  equivalent in pull request bodies, issue comments, review comments, release
-  notes, or tag messages.
+- **No `Co-authored-by:` trailer** naming an assistant or model, and no
+  assistant session line, on any commit. Strip whatever the editor
+  injected. Commits are authored solely by the human maintainer
+  (`tr9800a`), which is also who is accountable for them.
+- **No "Generated with …" / "Made with …" footer** or equivalent in pull
+  request bodies, issue comments, review comments, release notes, or tag
+  messages.
 - **No signature, byline, watermark or "written by" marker in code or comments.** A `// ponytail:`
   marker is about the *code* — a named simplification with its ceiling — and stays; it does not
   name a tool or an author.

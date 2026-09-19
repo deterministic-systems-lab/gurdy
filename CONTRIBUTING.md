@@ -35,22 +35,23 @@ Issues, discussions and security reports need no sign-off — see
 ## No AI attribution
 
 Nothing published from this repository names a coding agent as an author.
-Cursor, Claude, and any other assistant are included. The default editor
-behaviour inserts `Co-authored-by: Cursor` and similar trailers; strip
-them before the commit lands. Commits are authored solely by the human
-who signs the DCO.
+That includes every assistant an editor might attach automatically.
+Strip an injected `Co-authored-by:` trailer or "Generated with …"
+footer before the commit or PR lands. Commits are authored solely by
+the human who signs the DCO.
 
-- No `Co-authored-by:` trailer naming Cursor, Claude, or any model
-- No `Cursor-Session:` or `Claude-Session:` line
-- No "Generated with Cursor" / "Generated with Claude Code" footer in
-  pull requests, issues, release notes, or tag messages
+- No `Co-authored-by:` trailer naming an assistant or model
+- No session trailer from an assistant
+- No "Generated with …" / "Made with …" footer in pull requests,
+  issues, release notes, or tag messages
 - No byline or watermark in code or comments
 
 `scripts/check-dco.sh` rejects those trailers on pull requests. Local
 commits get the same treatment: `make hooks` installs `.git/hooks/commit-msg`,
 which strips an injected agent trailer before the object is written.
-Naming Cursor (or Claude Code, Antigravity, ChatGPT) as a *host* Gurdy
-can sit in front of is not attribution — see [`docs/hosts.md`](docs/hosts.md).
+Naming a product Gurdy can sit in front of (the Cursor IDE, Claude Code,
+Antigravity, ChatGPT) is a host, not an author — see
+[`docs/hosts.md`](docs/hosts.md).
 
 ## The spec is normative
 
@@ -170,9 +171,9 @@ becoming a graveyard.
 
 Explain *why*, not what — the diff already says what. If you found a defect
 while building something else, say so; that context is usually the most valuable
-part. Author and committer are a person. If a tool appended
-`Co-authored-by: Cursor` (or any other agent), amend it off before you
-push: `git commit --amend -s` and delete the trailer.
+part. Author and committer are a person. If a tool appended an agent
+`Co-authored-by:` trailer, amend it off before you push:
+`git commit --amend -s` and delete the trailer.
 
 Update [`docs/roadmap.md`](docs/roadmap.md) and
 [`docs/activity-log.md`](docs/activity-log.md) with the change, not afterwards.

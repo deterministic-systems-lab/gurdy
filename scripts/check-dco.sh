@@ -63,7 +63,7 @@ if [ $fail -ne 0 ]; then
 
 Fix with:
   git rebase --signoff <base-branch>     # sign off everything on this branch
-  git commit --amend -s                  # just the tip; delete any Co-authored-by: Cursor line
+  git commit --amend -s                  # just the tip; delete any agent Co-authored-by line
 
 Then force-push. See CONTRIBUTING.md — it is a one-line certification, not a CLA.
 EOF

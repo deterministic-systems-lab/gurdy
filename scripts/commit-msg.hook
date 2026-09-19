@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Installed as .git/hooks/commit-msg (make hooks). Strips agent authorship
-# trailers so a local commit cannot land Co-authored-by: Cursor even when
-# the editor injects it.
+# trailers so a local commit cannot land an assistant Co-authored-by line
+# even when the editor injects it.
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)

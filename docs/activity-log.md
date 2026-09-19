@@ -32,10 +32,9 @@ and Codex / ChatGPT desktop now share classify → `tools/call` →
 chatgpt.com is documented as unconnectable — no local hook, no local
 MCP file. `--host chatgpt` writes `~/.codex` (desktop + CLI + IDE).
 
-The no-AI-attribution rule now names Cursor explicitly. An agent
-authorship trailer is an unverifiable provenance claim. Local
+An agent authorship trailer is an unverifiable provenance claim. Local
 `commit-msg` (`make hooks`) strips it before the object is written;
-`scripts/check-dco.sh` rejects it on pull requests. Naming the IDE as a
+`scripts/check-dco.sh` rejects it on pull requests. Naming an IDE as a
 host in install docs is not authorship.
 
 ---
