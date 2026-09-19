@@ -35,6 +35,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .claims import Claim, Section
+from .control_map import ControlMap
+from .framework import ControlFinding, apply as apply_framework
 from .ledger import Decision, LedgerData
 
 
@@ -51,6 +53,9 @@ class Report:
     #: Reasons this export cannot carry an ordinary report. Non-empty means the
     #: renderer emits a refusal instead, and the CLI exits nonzero.
     refusals: list[str] = field(default_factory=list)
+    framework_id: str = ""
+    framework_name: str = ""
+    control_findings: list[ControlFinding] = field(default_factory=list)
 
     @property
     def reportable(self) -> bool:
@@ -62,7 +67,14 @@ class Report:
         return s
 
 
-def build(ledger_dir: Path, data: LedgerData, ver: Verification) -> Report:
+def build(
+    ledger_dir: Path,
+    data: LedgerData,
+    ver: Verification,
+    *,
+    framework: str | None = None,
+    control_map: ControlMap | None = None,
+) -> Report:
     r = Report(ledger_dir=str(ledger_dir))
 
     _integrity(r, ver)
@@ -70,13 +82,18 @@ def build(ledger_dir: Path, data: LedgerData, ver: Verification) -> Report:
         # Deliberately stops here. Every section below would describe records
         # whose authenticity has just been rejected, and a document that reports
         # findings over unverified evidence is worse than one that reports
-        # nothing: it looks the same as a real one.
+        # nothing: it looks the same as a real one. A framework projection over
+        # that same export would be a control opinion on garbage.
         return r
 
     _coverage(r, ver, data)
     _what_happened(r, data)
     _attribution(r, data)
     _policies(r, data)
+    if framework:
+        if control_map is None:
+            raise ValueError("framework projection requires a loaded control map")
+        apply_framework(r, data, ver, framework, control_map)
     return r
 
 
@@ -335,14 +352,20 @@ def _what_happened(r: Report, data: LedgerData) -> None:
         if d.action_applied not in ("forwarded", "failed_open", "blocked", "rewritten", "")
     ]
     if flagged:
+        monitor_only = not stopped and all(d.action_applied == "forwarded" for d in flagged)
         s.add(
             Claim(
                 f"{len(flagged)} call(s) were flagged or would have been blocked, and "
                 f"{len(stopped)} were stopped.",
                 refs=_refs(flagged),
-                caveat="this build is monitor-only (ADR-3): a decision of 'block' records what a "
-                "policy would have done, and the traffic was forwarded regardless. This is not an "
-                "enforcement claim",
+                caveat=(
+                    "monitor-only observation: a decision of 'block' records what a "
+                    "policy would have done, and the traffic was forwarded. This is not an "
+                    "enforcement claim"
+                    if monitor_only
+                    else "decision is the policy conclusion; action_applied is what the actuator "
+                    "did. A count of flags without the stopped count is not an enforcement claim"
+                ),
             )
         )
 

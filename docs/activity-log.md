@@ -9,6 +9,18 @@ it starts, and from the flip onward it is the *only* narrative of the build that
 
 ---
 
+## 2026-09-19 — starter control map and framework projection
+
+`policy/control_map.yaml` maps the starter pack onto NIST AI RMF
+GOVERN/MEASURE, ISO/IEC 42001 7.5 and A.10.3, and EU AI Act Art. 12.
+`gurdy-report --framework` projects a verified export through that map.
+Status is evidenced, partial, or not-in-scope. A failed chain still
+produces NOT REPORTABLE and no control statuses. The document does not
+state that an organization is compliant. HTML/PDF packs and HIPAA IDs
+stay unbuilt.
+
+---
+
 ## 2026-09-18 — enforce coverage: batch rewrite and fail-open
 
 The coverage ratchet failed the PR at 80.9% against 83.1%. The new

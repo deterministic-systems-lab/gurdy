@@ -7,6 +7,8 @@ reviewer (BR-11, §5.6). Markdown for a person, JSON for a tool.
 uv run gurdy-report ./gurdy-ledger                       # to stdout
 uv run gurdy-report ./gurdy-ledger -o report.md --json report.json
 uv run gurdy-report ./gurdy-ledger --pubkey ledger.pub   # pin the key
+uv run gurdy-report ./gurdy-ledger --framework eu-ai-act
+uv run gurdy-report ./gurdy-ledger --framework nist-ai-rmf --control-map ../policy/control_map.yaml
 ```
 
 Exit **0** if the export could carry a report, **1** if it could not, **2** on a
@@ -73,14 +75,27 @@ and that difference is the entire value of the artifact.
   key comes from the export itself, so an attacker who rewrote the file could
   embed their own. The report flags this.
 
+## Framework projection
+
+`--framework nist-ai-rmf|iso-42001|eu-ai-act` adds a control-by-control
+section from `policy/control_map.yaml`. That file is justification: which
+starter policies were written to support which control IDs. The reporter
+projects a *verified* export through the map. Status is `evidenced`,
+`partial`, or `not-in-scope`. It does not state that an organization is
+compliant, and a failed chain still produces NOT REPORTABLE with no
+control statuses.
+
+Record-keeping rows (EU AI Act Art. 12, ISO/IEC 42001 7.5 and A.10.3,
+NIST MEASURE 1.1) rest on the chain itself. GOVERN 1.1 rests on
+`bundle_ver` / `policy_effects`. MEASURE 2.3 stays honest about flagged
+versus stopped.
+
 ## Not built
 
-Control-framework mapping (NIST AI RMF / ISO 42001 / HIPAA), violation narratives
-with remediation, HTML/PDF, and the period-over-period dashboard. Those need
-`control_map.yaml` from the pack registry (§5.4, BR-4), which has no owner or
-date. They were once the paid artifact (§5.6); they are now unbuilt, and will be
-Apache-2.0 here when they exist. This report deliberately stops at "what
-happened, what was flagged, and what this export cannot tell you."
+HIPAA control IDs, HTML/PDF evidence packs, period-over-period dashboards,
+and remediation narratives beyond the flagged-versus-stopped template.
+Those remain unbuilt. This report still refuses to say more than the
+ledger can carry.
 
 ## Development
 

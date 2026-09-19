@@ -90,6 +90,7 @@ The reporter (`reporter/`) compiles a ledger into the artifact a reviewer reads:
 ```bash
 cd reporter && uv sync && uv run pytest -q
 uv run gurdy-report ../proxy/gurdy-ledger --verifier ../proxy/gurdy-verify
+uv run gurdy-report ../proxy/gurdy-ledger --framework eu-ai-act
 ```
 
 It **refuses** rather than caveats when the evidence is not evidence, and it does

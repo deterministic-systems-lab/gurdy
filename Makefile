@@ -1,4 +1,4 @@
-.PHONY: proxy pack check adapter-tests fleet-tests install-host hooks
+.PHONY: proxy pack check adapter-tests fleet-tests reporter-tests install-host hooks
 
 proxy:
 	mkdir -p bin
@@ -29,6 +29,9 @@ adapter-tests:
 	python3 adapters/test_connect.py
 	python3 policy/test_pack.py
 	bash scripts/test-check-dco.sh
+
+reporter-tests:
+	cd reporter && uv run pytest -q
 
 fleet-tests:
 	python3 fleet/test_ship.py
