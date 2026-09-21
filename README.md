@@ -75,12 +75,16 @@ again; it will name the record where the chain stops.
 ```bash
 cd gurdy/reporter && uv sync
 uv run gurdy-report /tmp/demo/ledger --verifier /tmp/gurdy-verify
+uv run gurdy-report /tmp/demo/ledger --framework eu-ai-act
 ```
 
 You get Markdown a person can read, with every claim citing the ledger records
-it rests on — and a JSON sibling for tooling (`--json`). It **refuses** to
-produce a report from an export that fails verification, because a report over
-unverified records looks exactly like a report over sound ones.
+it rests on — and a JSON sibling for tooling (`--json`). `--framework`
+projects the same verified export through `policy/control_map.yaml`. It
+**refuses** to produce a report from an export that fails verification,
+because a report over unverified records looks exactly like a report over
+sound ones. The framework section does not state that an organization is
+compliant.
 
 ## What just happened
 
@@ -244,9 +248,12 @@ wrong thing to be bad at:
 - **Seven known attack gaps**, published in [`corpus/`](corpus/) rather than
   quietly omitted. Five share one root cause: controls match on strings the
   agent chooses.
-- **No framework-mapped report** (NIST / ISO / EU AI Act mapping). Fleet
-  desired/actual and the policy builder are in this tree; that mapping is
-  not.
+- **Framework map is a projection, not a certificate.**
+  `gurdy-report --framework nist-ai-rmf|iso-42001|eu-ai-act` projects a
+  verified export through [`policy/control_map.yaml`](policy/control_map.yaml).
+  Status is evidenced, partial, or not-in-scope. It does not state that
+  an organization is compliant. HIPAA maps and HTML/PDF packs are still
+  unbuilt.
 
 ## Licence
 

@@ -22,6 +22,8 @@ from real data still misleads its reader:
 """
 
 from .claims import Claim, Section, UncitedClaim
+from .control_map import ControlMap, ControlMapError, load_map
+from .framework import ControlFinding
 from .ledger import LedgerData, load
 from .render import as_json, markdown
 from .report import Report, build
@@ -33,6 +35,9 @@ from .verify import verify as verify_export
 
 __all__ = [
     "Claim",
+    "ControlFinding",
+    "ControlMap",
+    "ControlMapError",
     "LedgerData",
     "Report",
     "Section",
@@ -42,6 +47,7 @@ __all__ = [
     "as_json",
     "build",
     "load",
+    "load_map",
     "markdown",
     "verify_export",
 ]

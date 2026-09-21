@@ -105,7 +105,8 @@ Phase 1 **exits monitor-only.** Local enforcement is Phase 2 (ADR-14 moved the p
 - [ ] **Tool-signature binding — the pack half.** The proxy now publishes the signature; nothing yet *binds* to it, because capability cannot be inferred from a schema. A schema says `fs_write` takes a path and a mode; it does not say `mode: "truncate"` destroys the file, and deriving that would need a model in the decision path (ADR-7, forbidden permanently). Capability must be **declared by the pack, keyed by signature** — which is `control_map.yaml` and therefore the pack registry, still with no owner or date
 - [ ] Signature observation on the **stdio shim**. The shim already parses both directions (D4), so feeding the same registry is small; the HTTP path landed first because that is where the corpus runs
 - [ ] **No starter rule flags undeclared tools**, deliberately. Most traffic is undeclared today — any deployment whose client does not enumerate through the proxy — and the codebase already refused to ship "flag every unattested model call" for the same reason: a control that fires on 100% of traffic is noise, not a control. The attribute ships; the rule belongs in the agent-security pack once enumeration is the norm
-- [ ] Bundle signing + verification, `control_map.yaml`, YAML manifest — all three currently deferred "to the pack registry," which **has no owner or date**. `control_map.yaml` is a hard dependency of the reporter (BR-4 → BR-1), so the registry needs a date
+- [x] **Starter `control_map.yaml`** — landed 2026-09-19. Maps the starter pack onto NIST GOVERN/MEASURE, ISO/IEC 42001 7.5 and A.10.3, and EU AI Act Art. 12, with explicit out-of-scope rows. Justification, not a certificate. Bundle signing and a pack registry are still unbuilt
+- [ ] Bundle signing + verification, YAML pack manifest — still deferred. The starter map no longer blocks the reporter
 
 ### E. Transport coverage
 
@@ -165,7 +166,8 @@ Phase 1 **exits monitor-only.** Local enforcement is Phase 2 (ADR-14 moved the p
 
 - [x] **Free-tier local mini-report (BR-11)** — landed 2026-07-26, `reporter/` (`gurdy-report`). Markdown for a person, JSON for a tool, no dependencies. Deterministic and template-driven with no model in the path (§5.6), so the same export produces byte-identical output and anyone can reproduce the artifact from the ledger they were handed. **It does not verify chains itself**: §3.3 keeps one implementation of that in the Go core, so it shells out to the new `gurdy-verify -json` and refuses to run if the verifier is missing. **It refuses rather than caveats** when evidence is not evidence — a failed chain, an empty directory, or a partially-failed export produces NOT REPORTABLE, zero findings and exit 1, because a report over unverified records is indistinguishable from one over sound records. Every claim carries its citation as a matter of type: a `Claim` cannot be constructed without the qualified record refs it rests on
 - [x] **FR-12 adjacency: `gurdy-verify -json`** — machine-readable verification output, which the reporter consumes instead of reimplementing the chain walk
-- [ ] Python reporter (§5.6): template-driven, **no LLM in the path**, every claim linked to a ledger seq. Depends on `control_map.yaml` from D
+- [x] **Framework projection (`gurdy-report --framework`)** — landed 2026-09-19. Control-by-control status (`evidenced` / `partial` / `not-in-scope`) from the starter map, cited like every other claim, no model in the path. Refuses to project a failed chain. Does not emit a compliance claim
+- [ ] HTML/PDF evidence pack, HIPAA control IDs, period-over-period dashboard, remediation narratives beyond flagged-versus-stopped
 - [ ] Dashboard (§5.7) — *named descope candidate, review-doc Issue 6*
 
 ### J. Packaging

@@ -35,6 +35,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--ledger", type=Path, required=True)
     ap.add_argument("--verifier", type=Path, required=True)
     ap.add_argument("--pubkey", type=Path, default=None)
+    ap.add_argument(
+        "--framework",
+        default="",
+        help="pass through to gurdy-report (nist-ai-rmf|iso-42001|eu-ai-act)",
+    )
+    ap.add_argument("--control-map", type=Path, default=None)
     args = ap.parse_args(argv)
 
     overlay = Path(__file__).resolve().parent.parent
@@ -54,6 +60,10 @@ def main(argv: list[str] | None = None) -> int:
         ]
         if args.pubkey:
             cmd.extend(["--pubkey", str(args.pubkey)])
+        if args.framework:
+            cmd.extend(["--framework", args.framework])
+        if args.control_map:
+            cmd.extend(["--control-map", str(args.control_map)])
         print(f"## export {i + 1}/{len(dirs)}: {d}\n")
         proc = subprocess.run(cmd)
         if proc.returncode != 0:

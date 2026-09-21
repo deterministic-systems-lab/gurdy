@@ -97,8 +97,9 @@ def as_json(report: Report) -> str:
         "interpretation": {
             "denominator": "counts are over records written to this ledger, never over traffic; "
             "traffic that did not reach the proxy is outside every number",
-            "monitor_mode": "decision=block records what a policy would have done; "
-            "action_applied says what happened to the traffic. This build never blocks (ADR-3)",
+            "monitor_mode": "decision=block is the policy conclusion; action_applied says "
+            "what happened (forwarded, blocked, failed-open). A count of flags without "
+            "stopped is not an enforcement claim",
             "unanswered": "a decision with no response record may have succeeded, failed, or still "
             "be in flight; it is counted as neither",
             "findings": "classification findings are advisory and never a decision input (ADR-7); "
@@ -118,4 +119,24 @@ def as_json(report: Report) -> str:
             for s in report.sections
         ],
     }
+    if report.framework_id:
+        payload["framework"] = {
+            "id": report.framework_id,
+            "name": report.framework_name,
+            "disclaimer": "projection of a verified export through a control map; "
+            "not a conformity assessment",
+            "controls": [
+                {
+                    "control_id": f.control_id,
+                    "title": f.title,
+                    "status": f.status,
+                    "text": f.text,
+                    "refs": list(f.refs),
+                    "caveat": f.caveat,
+                    "absent_because": f.absent_because,
+                    "policies": list(f.policies),
+                }
+                for f in report.control_findings
+            ],
+        }
     return json.dumps(payload, indent=2, sort_keys=False) + "\n"

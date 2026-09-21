@@ -1,7 +1,10 @@
 # Policy builder
 
 The source of truth is `controls.json`. `pack.py` writes `pack.cedar`.
-Do not edit the Cedar by hand.
+Do not edit the Cedar by hand. `control_map.yaml` says which starter
+policies were written to support which NIST / ISO / EU AI Act control
+IDs. It is justification, not a certificate. `python3 policy/pack.py check`
+rejects a map that names a policy the pack does not have.
 
 ```bash
 python3 policy/pack.py pick          # menu

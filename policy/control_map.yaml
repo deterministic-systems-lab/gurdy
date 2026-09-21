@@ -1,0 +1,149 @@
+# Starter pack control map. Justification, not a certificate.
+# gurdy-report --framework projects a verified export through these rows.
+# Status values are evidenced, partial, or not-in-scope. Never compliant.
+
+schema_version: 1
+pack_id: starter
+disclaimer: This map states which operational policies were written to support which control IDs. It does not assert that an organization is compliant.
+
+frameworks:
+  nist-ai-rmf: NIST AI Risk Management Framework 1.0
+  iso-42001: ISO/IEC 42001:2023
+  eu-ai-act: Regulation (EU) 2024/1689
+
+pack_controls:
+  - framework: eu-ai-act
+    control_id: Art. 12
+    title: Record-keeping
+    statement: Automatic logs of intercepted agent tool calls the proxy observed.
+    justification: The proxy appends a hash-chained, batch-signed decision record for every governed call it sees.
+    evidence: ledger
+  - framework: iso-42001
+    control_id: "7.5"
+    title: Documented information
+    statement: Retained, third-party-verifiable records of intercepted agent actions.
+    justification: gurdy-verify re-walks the export; gurdy-report will not render findings over a chain that failed.
+    evidence: ledger
+  - framework: iso-42001
+    control_id: A.10.3
+    title: Event logs
+    statement: Per-call decision, response, coverage, and retention records.
+    justification: The ledger is the event log for traffic that reached the proxy.
+    evidence: ledger
+  - framework: nist-ai-rmf
+    control_id: MEASURE 1.1
+    title: Metrics identified and collected
+    statement: Counts over records written to this ledger, never over all traffic.
+    justification: Decision, coverage, and verification fields are the metrics this product can stand behind.
+    evidence: ledger
+  - framework: nist-ai-rmf
+    control_id: GOVERN 1.1
+    title: Policies, processes, procedures
+    statement: A versioned operational pack was in force on recorded calls.
+    justification: bundle_ver and policy_effects record which starter policies decided each call. This is not an AIMS policy set.
+    evidence: pack
+  - framework: nist-ai-rmf
+    control_id: MEASURE 2.3
+    title: Effectiveness of controls
+    statement: Whether a mapped policy flagged a call, and whether the actuator stopped it.
+    justification: decision, policy_mode, and action_applied stay distinct so a shadow observation cannot be read as enforcement.
+    evidence: enforcement
+
+policies:
+  - id: shadow-credential-read
+    statement: Flag or block reads of credential paths.
+    maps:
+      - framework: nist-ai-rmf
+        control_id: GOVERN 1.1
+        title: Policies, processes, procedures
+        statement: Operational forbid on credential-path tool use.
+        justification: Starter pack policy written to keep credential material off agent tool paths.
+        evidence: policy_fire
+      - framework: nist-ai-rmf
+        control_id: MEASURE 2.3
+        title: Effectiveness of controls
+        statement: Credential-path forbids, with flagged versus stopped.
+        justification: Same three-field record as every other starter forbid.
+        evidence: enforcement
+  - id: shadow-sensitive-write
+    statement: Flag or block writes under listed sensitive path globs.
+    maps:
+      - framework: nist-ai-rmf
+        control_id: GOVERN 1.1
+        title: Policies, processes, procedures
+        statement: Operational forbid on sensitive writes.
+        justification: Emitted only when write_paths is non-empty.
+        evidence: policy_fire
+      - framework: nist-ai-rmf
+        control_id: MEASURE 2.3
+        title: Effectiveness of controls
+        statement: Sensitive-write forbids, with flagged versus stopped.
+        justification: Same three-field record as every other starter forbid.
+        evidence: enforcement
+  - id: shadow-destructive-fs
+    statement: Flag or block destructive filesystem tools.
+    maps:
+      - framework: nist-ai-rmf
+        control_id: GOVERN 1.1
+        title: Policies, processes, procedures
+        statement: Operational forbid on destructive filesystem tools.
+        justification: Name-prefix and exact match over the normalized tool.
+        evidence: policy_fire
+      - framework: nist-ai-rmf
+        control_id: MEASURE 2.3
+        title: Effectiveness of controls
+        statement: Destructive-filesystem forbids, with flagged versus stopped.
+        justification: Same three-field record as every other starter forbid.
+        evidence: enforcement
+  - id: shadow-named-tools
+    statement: Flag or block named shell aliases that exfiltrate over the network.
+    maps:
+      - framework: nist-ai-rmf
+        control_id: GOVERN 1.1
+        title: Policies, processes, procedures
+        statement: Operational forbid on aliased egress tools.
+        justification: curl, wget, nc, and ncat classify as http_fetch.
+        evidence: policy_fire
+      - framework: nist-ai-rmf
+        control_id: MEASURE 2.3
+        title: Effectiveness of controls
+        statement: Named-tool forbids, with flagged versus stopped.
+        justification: Same three-field record as every other starter forbid.
+        evidence: enforcement
+  - id: shadow-unlisted-model-host
+    statement: Flag or block model calls to an unlisted provider.
+    maps:
+      - framework: nist-ai-rmf
+        control_id: GOVERN 1.1
+        title: Policies, processes, procedures
+        statement: Operational forbid on unlisted model hosts.
+        justification: Fires on llm/completion. Host adapters that never emit that action cannot exercise it.
+        evidence: policy_fire
+      - framework: nist-ai-rmf
+        control_id: MEASURE 2.3
+        title: Effectiveness of controls
+        statement: Unlisted-host forbids, with flagged versus stopped.
+        justification: Same three-field record as every other starter forbid.
+        evidence: enforcement
+
+out_of_scope:
+  - framework: nist-ai-rmf
+    control_id: MAP 2.3
+    title: AI system categorization
+    reason: A proxy cannot assign a system-level risk category. That is an organizational judgment.
+  - framework: iso-42001
+    control_id: "4"
+    title: Context of the organization
+    reason: An AIMS is a management system. Gurdy is an operational control in front of agent tools.
+  - framework: iso-42001
+    control_id: A.7.2
+    title: Data for AI systems
+    reason: The ledger stores hashes and extracted attributes, not training or evaluation datasets.
+  - framework: eu-ai-act
+    control_id: Art. 6
+    title: Risk classification
+    reason: Annex III classification is a duty of the provider or deployer, not of an interceptor.
+  - framework: eu-ai-act
+    control_id: Art. 10
+    title: Data and data governance
+    reason: GPAI and high-risk data duties are outside the proxy. Hashes of tool calls are not a training-data record.

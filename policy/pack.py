@@ -12,7 +12,7 @@ classify.py regexes.
     python3 policy/pack.py add-shell --command scp --tool file_exfil
     python3 policy/pack.py add-mcp github -- npx -y @modelcontextprotocol/server-github
     python3 policy/pack.py generate      # write pack.cedar
-    python3 policy/pack.py check         # cedar matches controls.json
+    python3 policy/pack.py check         # cedar matches controls.json; map ids match the pack
     python3 policy/pack.py publish       # POST current pack (GURDY_ADMIN_TOKEN)
 """
 
@@ -208,6 +208,24 @@ def check() -> int:
         print("policy/pack.cedar is stale. Run: python3 policy/pack.py generate", file=sys.stderr)
         return 1
     print("ok: pack.cedar matches controls.json")
+    return check_control_map()
+
+
+def check_control_map() -> int:
+    """Every mapped policy_id must exist in controls.json. The map is justification, not a certificate."""
+    src = str(ROOT / "reporter" / "src")
+    if src not in sys.path:
+        sys.path.insert(0, src)
+    from gurdy_report.control_map import ControlMapError, assert_pack_ids, load_map
+
+    path = ROOT / "policy" / "control_map.yaml"
+    try:
+        cmap = load_map(path)
+        assert_pack_ids(cmap, set((load().get("ids") or {}).values()))
+    except ControlMapError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    print("ok: control_map.yaml matches pack policy ids")
     return 0
 
 

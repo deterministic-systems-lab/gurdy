@@ -36,5 +36,8 @@ here, not what is permitted:
 
 Two things the old text named as paid, for anyone who read this file before:
 fleet coordination and the framework-mapped evidence report. Fleet
-desired/actual distribution is in this repository. The framework-mapped
-report is still unbuilt, tracked in docs/roadmap.md.
+desired/actual distribution is in this repository. The first slice of
+the framework map (`policy/control_map.yaml` and `gurdy-report
+--framework`) is also in this repository. It projects a verified export
+onto named control IDs. It is not a conformity assessment. HTML/PDF
+packs and HIPAA maps remain unbuilt, tracked in docs/roadmap.md.

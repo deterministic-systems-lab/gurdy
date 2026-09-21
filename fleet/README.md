@@ -34,5 +34,6 @@ Install the periodic shipper (launchd on macOS, systemd --user on Linux):
 python3 fleet/install_push.py --root .
 ```
 
-`report.py` wraps `gurdy-report` for the same dirs. It does not merge
+`report.py` wraps `gurdy-report` for the same dirs. Pass `--framework`
+to project each export through `control_map.yaml`. It does not merge
 chains.

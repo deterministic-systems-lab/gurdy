@@ -6,6 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from .control_map import FRAMEWORK_IDS, ControlMapError, load_map, resolve_map_path
 from .ledger import load as load_ledger
 from .render import as_json, markdown
 from .report import build
@@ -35,6 +36,16 @@ def main(argv: list[str] | None = None) -> int:
         help="report over trailing records no signature covers. For inspecting a LIVE ledger only: "
         "those records are forgeable by anyone with file access",
     )
+    ap.add_argument(
+        "--framework",
+        choices=sorted(FRAMEWORK_IDS),
+        help="project this export through the starter control map. Not a conformity assessment",
+    )
+    ap.add_argument(
+        "--control-map",
+        type=Path,
+        help="control_map.yaml (defaults to GURDY_CONTROL_MAP or policy/control_map.yaml)",
+    )
     args = ap.parse_args(argv)
 
     if not args.ledger_dir.is_dir():
@@ -58,7 +69,20 @@ def main(argv: list[str] | None = None) -> int:
     # independently would let a file that appeared after verification feed
     # claims that nothing checked.
     data = load_ledger(args.ledger_dir, verified={Path(e.file).name for e in ver.exports})
-    rep = build(args.ledger_dir, data, ver)
+    cmap = None
+    if args.framework:
+        try:
+            cmap = load_map(resolve_map_path(args.control_map))
+        except ControlMapError as exc:
+            print(f"gurdy-report: {exc}", file=sys.stderr)
+            return 2
+        if args.framework not in cmap.frameworks:
+            print(
+                f"gurdy-report: control map {cmap.path} does not define {args.framework}",
+                file=sys.stderr,
+            )
+            return 2
+    rep = build(args.ledger_dir, data, ver, framework=args.framework, control_map=cmap)
 
     md = markdown(rep)
     if args.out:
