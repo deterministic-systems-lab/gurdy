@@ -142,10 +142,15 @@ def _decide(call: dict[str, Any], payload: dict[str, Any]) -> str:
             if tok:
                 (IDENTITY_DIR / f"{conv}.txn").write_text(tok, encoding="utf-8")
                 TXN_FILE.write_text(tok, encoding="utf-8")
-            assert proc.stdin is not None
-            proc.stdin.write(line.encode())
-            proc.stdin.close()
-            stderr = proc.communicate(timeout=8)[1]
+            # One communicate() call, never write + close + communicate:
+            # communicate() flushes stdin itself, so closing it first raises
+            # ValueError("flush of closed file") on every single call. That is
+            # not an OSError, so the handler below never saw it — it reached
+            # the hook's outer fail-open and became permission=allow. Enforce
+            # was therefore unreachable on *every* native tool call, for every
+            # host, and the one test that would have caught it skips itself
+            # when proxy/gurdy-proxy has not been built. Fixed 2026-09-30.
+            stderr = proc.communicate(input=line.encode(), timeout=8)[1]
         except (OSError, subprocess.TimeoutExpired):
             proc.kill()
             return "indeterminate"

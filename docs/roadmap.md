@@ -22,7 +22,7 @@ Against §8.2, **Stages A–E are built, tested, and green** (`go test ./...` pa
 | Bundle load / hot-reload / rollback; localhost admin API with CSRF guard | `internal/bundle`, `internal/policy/store.go` |
 | OTel decision spans joining the agent's trace | `cmd/gurdy-proxy/main.go` |
 
-That is the deepest and smallest part of the system. `sdk/`, `conformance/`, and `cloud/` are still empty. Roughly 60–70% of Phase 1 remains.
+That is the deepest and smallest part of the system. **Written 2026-07 and kept for the sequencing below, not as current state** — `sdk/` and `conformance/` have since been built, `cloud/` was never created, and the host adapters, policy pack builder, fleet shipper and local enforce actuator all landed in 2026-09. What remains of Phase 1 is the debt list in §2, not a percentage.
 
 ---
 

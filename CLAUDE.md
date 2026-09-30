@@ -17,7 +17,10 @@ the doc (it does not amend it) and tracks known debt items D1–D8 with file loc
 before "fixing" something that is a deliberate, scheduled gap.
 
 `proxy/` (Go), `sdk/python` and `sdk/typescript` have code; `conformance/` holds the shared corpus
-that both SDKs are judged by. `cloud/` is an empty placeholder.
+that both SDKs are judged by. `adapters/` wraps the agent hosts (Cursor, Claude Code, Codex,
+Antigravity) so native tool calls reach the same decision path as MCP traffic; `policy/` builds the
+Cedar pack from `controls.json`; `fleet/` ships ledgers off a workstation; `console/` is a
+self-hosted Next.js viewer and is not part of the core story.
 
 ## Commands
 
