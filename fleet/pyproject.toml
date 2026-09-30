@@ -8,6 +8,13 @@ dependencies = []
 [project.scripts]
 gurdy-ship = "ship:main"
 
+# Matches reporter/: pytest is declared so `uv sync && uv run pytest -q` works
+# from a clean clone. Without it the command only works where pytest happens to
+# be on the interpreter already, which is every developer's machine and no CI
+# runner — the tests passed locally and could not run in the gate.
+[dependency-groups]
+dev = ["pytest>=8"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
