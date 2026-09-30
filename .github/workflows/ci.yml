@@ -16,7 +16,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0   # the check needs the base commits, not just the tip
       - run: ./scripts/check-dco.sh
@@ -29,8 +29,8 @@ jobs:
       run:
         working-directory: proxy
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: proxy/go.mod
 
@@ -88,9 +88,14 @@ jobs:
 
       - name: coverage gate
         env:
-          # 83.1 measured 2026-08-10 (rotation, pruning, the admin endpoint).
-          # Raised each time real tests land, which is what a ratchet is for;
-          # the gap to §8's 85% is cmd/gurdy-proxy process wiring (D9).
+          # Measured 83.2% on 2026-09-30 (toSignatures, hashingWriter.Unwrap);
+          # floor held at 83.1 on purpose. The enforce work landed at 83.0 and
+          # held this gate red from 2026-09-19 to 2026-09-30 — its own paths are
+          # covered 91-100%, but +176 statements of process wiring in main.go
+          # diluted the total under a floor set to the exact measurement. A
+          # ratchet with no margin turns any unrelated statement into a red
+          # build, which is how a gate stops being read. Keep ~0.1pp of slack
+          # when raising it; the gap to §8's 85% is that same wiring (D9).
           MIN: "83.1"
         run: |
           go tool cover -func=cover.out | awk -v m="$MIN" '/^total:/ {
@@ -111,8 +116,8 @@ jobs:
   sdks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: proxy/go.mod
       - uses: actions/setup-node@v4
@@ -142,3 +147,73 @@ jobs:
           go build -o /tmp/gc ./cmd/gurdy-conform
           /tmp/gc -cases ../conformance/cases -proxy /tmp/gp -driver ../sdk/python/run-driver.sh
           /tmp/gc -cases ../conformance/cases -proxy /tmp/gp -driver ../sdk/typescript/run-driver.sh
+
+  # The host adapters, the fleet shipper and the policy pack builder arrived
+  # together and none of them was gated anywhere — the same gap the `sdks` job
+  # above was created to close, for the same reason: `policy/` generates the
+  # Cedar pack that every decision is made against, so "the pack builder is
+  # untested" means "no decision in the ledger has a tested provenance".
+  #
+  # **These are assert-scripts with a `__main__`, not pytest modules**, and that
+  # distinction is load-bearing here: `pytest` in `policy/` or `adapters/`
+  # collects zero items and exits 0, so a gate written the obvious way is green
+  # and runs nothing. They are invoked as scripts on purpose. If you convert
+  # them to pytest functions, change this job in the same commit or the gate
+  # goes quietly empty.
+  #
+  # Globbed rather than listed so a new `test_*.py` is gated by existing, not
+  # by somebody remembering to add it here.
+  adapters:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: proxy/go.mod
+
+      # cursor/test_govern.py is the only test that drives the whole adapter
+      # path — classify, then a real gurdy-proxy, then Cedar, then enforce —
+      # and it *skips itself* when it cannot find the binary at
+      # proxy/gurdy-proxy. Without this step the job is green and the one test
+      # that proves the adapter governs anything never runs. The skip is right
+      # for a developer who has not built; it is worthless as a gate.
+      - name: build the proxy the adapter tests drive
+        working-directory: proxy
+        run: go build -o gurdy-proxy ./cmd/gurdy-proxy
+
+      # Generated artefacts are checked in (pack.cedar, control_map.yaml), so
+      # these assert that what is committed still matches controls.json — a
+      # stale generated pack is the failure mode that looks like nothing.
+      - name: policy pack
+        working-directory: policy
+        run: for f in test_*.py; do echo "== $f"; python3 "$f"; done
+
+      # `set -euo pipefail` explicitly, and NOT a `for ... done || { ... }`
+      # wrapper: bash suppresses `-e` inside a compound command that is the
+      # left operand of `||`, so that form runs every test and reports green
+      # whatever they exit with. It hid a real failure in this very job.
+      # pipefail is what makes the `tee` below propagate a test's exit status.
+      - name: host adapters
+        working-directory: adapters
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > /tmp/adapters.log
+          for f in test_*.py cursor/test_*.py; do
+            echo "== $f"
+            python3 "$f" 2>&1 | tee -a /tmp/adapters.log
+          done
+          # A skip means a test opted out of asserting anything — here that can
+          # only be the missing-binary path, which the build step above exists
+          # to prevent. Green-because-skipped is the failure this job is for.
+          if grep -q '^skip:' /tmp/adapters.log; then
+            echo "::error::an adapter test skipped itself; this job asserts less than it appears to"
+            exit 1
+          fi
+
+      # fleet/ is a real package with a pyproject, so it is the one tree here
+      # where pytest is the correct invocation.
+      - name: fleet
+        working-directory: fleet
+        run: uv sync && uv run pytest -q

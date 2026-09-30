@@ -9,6 +9,38 @@ it starts, and from the flip onward it is the *only* narrative of the build that
 
 ---
 
+## 2026-09-30 — enforce never reached a host; the test that knew was skipping
+
+`govern._decide` wrote the frame, closed the child's stdin, then called
+`communicate()` — which flushes stdin itself, so every call raised
+`ValueError: flush of closed file`. That is not an `OSError`, so the
+handler beside it never saw it; the hook's outer fail-open caught it
+and returned `permission=allow`. **Enforce was unreachable on every
+native tool call, on all four hosts**, while the Go actuator it fronts
+worked correctly. One `communicate(input=...)` fixes it.
+
+It survived because `adapters/cursor/test_govern.py` — the only test
+that drives classify → proxy → Cedar → deny — prints `skip:` and exits
+0 when `proxy/gurdy-proxy` is absent, and no CI job built one. That
+skip is right for a developer who has not built and worthless as a
+gate, so the new `adapters` job builds the binary and fails on a
+`skip:` in its own output.
+
+CI had been red on main since the move: coverage 83.0% against a floor
+set to the exact previous measurement. Floor now carries ~0.1pp of
+slack, because a ratchet with no margin is a gate people stop reading.
+
+`adapters/`, `fleet/` and `policy/` were gated for the first time —
+~1,900 lines of passing tests that nothing ran. `policy/` and
+`adapters/` hold assert-scripts, not pytest modules, so `pytest` there
+collects zero and exits 0; they are invoked as scripts, and the job
+says so in case someone "fixes" them. The first draft of that job
+wrapped the loop in `|| { … }`, which suppresses `set -e` inside the
+compound and reported green over a real failure — the same class of
+bug as the one it was added to catch.
+
+---
+
 ## 2026-09-19 — starter control map and framework projection
 
 `policy/control_map.yaml` maps the starter pack onto NIST AI RMF
