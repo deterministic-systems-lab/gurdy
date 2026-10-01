@@ -57,10 +57,21 @@ An agent read a private key. That is now written down.
 ```
 
 ```
-OK  ledger/local_stdio_cat-….jsonl: 3 records, 1 decisions, 1 batch signatures
-    chain: tenant=local workload=stdio:cat instance=gurdy-local#01KYG… schema=v1
-    head: seq 3 hash 83640c4c7c66be52…
+OK    ledger/_proxy-….jsonl: 5 records, 0 decisions (0 answered), 2 batch signatures, key: embedded (unpinned — pin the key for third-party verification)
+      lifecycle: ended cleanly
+      chain: tenant=local workload=(none) instance=gurdy-local#01M3T… schema=v1 key=f493f3b5d35b8fa9
+      producer: gurdy/dev+dc4db4c6af52
+      head: seq 5 hash 8e58cdc74ab24011…
+OK    ledger/local_stdio_cat-….jsonl: 3 records, 1 decisions (0 answered), 1 batch signatures, key: embedded (unpinned — pin the key for third-party verification)
+      chain: tenant=local workload=stdio:cat instance=gurdy-local#01M3T… schema=v1 key=f493f3b5d35b8fa9
+      producer: gurdy/dev+dc4db4c6af52
+      head: seq 3 hash 043268a97f191ba0…
 ```
+
+Two files, because the proxy keeps its own lifecycle chain alongside the
+workload's. `unpinned` is the honest default: with no `-pubkey` the verifier
+trusts the key the export names, which proves the file is internally intact but
+not who produced it. Pass `-pubkey` for the third-party case.
 
 `gurdy-verify` needs nothing but the binary and the directory — no server, no
 key, no network. That is the point: the export **is** the evidence, and anyone
