@@ -129,7 +129,7 @@ checking that *somebody* signed the file, which is not a useful statement.
 
 We do not notarize (no Apple Developer account). Practically:
 
-- **`brew install gurdyai/tap/gurdy` works** — the cask's post-install hook
+- **`brew install deterministic-systems-lab/tap/gurdy` works** — the cask's post-install hook
   clears `com.apple.quarantine`. This is the supported macOS path.
 - **A binary downloaded with `curl` is quarantined.** macOS will refuse to run
   it until you clear the attribute yourself:
