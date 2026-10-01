@@ -220,8 +220,16 @@ jobs:
       # Trusted Publishing: no API token anywhere. PyPI verifies the GitHub OIDC
       # identity of this workflow instead, which means there is no long-lived
       # credential to leak, rotate, or be compelled to hand over — the same
-      # argument as cosign keyless signing. Configure it once at
-      # https://pypi.org/manage/project/gurdy/settings/publishing/
+      # argument as cosign keyless signing.
+      #
+      # **For the first-ever publish this is a *pending* publisher**, configured
+      # at https://pypi.org/manage/account/publishing/ — not the per-project URL
+      # this comment used to name
+      # (https://pypi.org/manage/project/gurdy/settings/publishing/), which 404s
+      # until the project exists and so cannot be where a first release is set
+      # up. Unlike npm, PyPI needs no placeholder upload to bootstrap OIDC: the
+      # pending publisher both authorises the workflow and reserves the name.
+      # Switch to the per-project URL for any change after the first release.
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: packaging/pypi/out
