@@ -8,7 +8,7 @@ one `checksums.txt` covers, or the one the reproducibility job checked.
 | Channel | Command | Built by |
 |---|---|---|
 | GitHub release | `curl … install.sh \| sh` | `.goreleaser.yaml` |
-| Homebrew | `brew install gurdyai/tap/gurdy` | `.goreleaser.yaml` (`homebrew_casks`) |
+| Homebrew | `brew install deterministic-systems-lab/tap/gurdy` | `.goreleaser.yaml` (`homebrew_casks`) |
 | npm | `npm i -g @gurdy/cli` | `packaging/npm/build.sh` |
 | PyPI | `pipx install gurdy` | `packaging/pypi/build_wheels.py` |
 

@@ -13,9 +13,41 @@ concludes should block. The three fields stay three fields — see
 > Gurdy is entirely open source — there is no paid tier and no withheld
 > component. See [What is not built](#what-is-not-built).
 
-## Five minutes, no infrastructure
+## Install
 
-You need Go 1.26+ (`proxy/go.mod`). Nothing else — no server, no account, no network.
+Pick one. All four give you the same two binaries, `gurdy-proxy` and
+`gurdy-verify`, and none of them needs a server, an account, or a network call
+at run time.
+
+```bash
+brew install deterministic-systems-lab/tap/gurdy        # macOS, Linux
+curl -fsSL https://raw.githubusercontent.com/deterministic-systems-lab/gurdy/main/install.sh | sh
+npm  i -g @gurdy/cli                                    # one platform binary, not four
+pipx install gurdy                                      # or: pip install gurdy
+```
+
+`pip install gurdy` is the one that does two things: the same binaries *plus*
+the Python SDK, so `import gurdy` works in an agent process. `npm i @gurdy/sdk`
+is the TypeScript half.
+
+Binaries are built by [`release.yml`](.github/workflows/release.yml), signed
+with cosign keyless (no stored private key), and shipped with an SBOM per
+archive. Every release is rebuilt on a second runner and fails if a byte
+differs. To check origin rather than just integrity:
+
+```bash
+cosign verify-blob --certificate-identity-regexp 'https://github.com/deterministic-systems-lab/gurdy/.*' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate checksums.txt.pem --signature checksums.txt.sig checksums.txt
+```
+
+`install.sh` always verifies the checksum, and says out loud that a checksum
+without cosign proves integrity and not origin — the checksum file travels
+from the same place as the archive.
+
+### Or build it — five minutes, no infrastructure
+
+You need Go 1.26+ (`proxy/go.mod`). Nothing else.
 
 ```bash
 git clone https://github.com/deterministic-systems-lab/gurdy && cd gurdy/proxy
@@ -246,8 +278,8 @@ code comments point into it, and the doc wins over the code.
 Stated plainly because a governance tool that overstates itself has picked the
 wrong thing to be bad at:
 
-- **No packaging.** No `brew`/`npm`/`pipx` install, no signed binaries, no SBOM.
-  You build from source. (§3.J)
+- **No Windows binaries.** macOS and Linux, amd64 and arm64. WSL2 works today;
+  native Windows is Phase 2. (§3.J)
 - **Blocking is opt-in.** Monitor is the default. `-enforce` is the local
   actuator (ADR-14). Admin-API mutating routes are still unauthenticated on
   localhost — do not treat a laptop as sealed.

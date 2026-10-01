@@ -9,7 +9,7 @@
 # of trusting its source, and an installer for it that piped an unverified
 # binary to your PATH would be the loudest possible counter-example.
 #
-# On macOS, prefer `brew install gurdyai/tap/gurdy` — see the Gatekeeper note at
+# On macOS, prefer `brew install deterministic-systems-lab/tap/gurdy` — see the Gatekeeper note at
 # the end of this script.
 set -eu
 
