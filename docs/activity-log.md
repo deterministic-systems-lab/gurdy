@@ -9,6 +9,44 @@ it starts, and from the flip onward it is the *only* narrative of the build that
 
 ---
 
+## 2026-10-01 — v0.1.1 published, and homebrew-core ruled out on provenance
+
+First release from this repository, and the first time the release
+path had ever run: `gate`, `release` and `verify-reproducible` all
+green, so the reproducibility claim has evidence rather than a
+workflow asserting it. Four platform tarballs, four SBOMs, cosign
+keyless signatures, cask in our tap.
+
+Both publish jobs failed on the first attempt and **published
+nothing** — the draft gate working as designed. PyPI returned
+`invalid-publisher` (the pending publisher named `release.yaml`, not
+`release.yml`); npm returned `ENEEDAUTH` on the *first* platform
+package, because npm only attempts the OIDC exchange when that exact
+package has a trusted publisher, and the four `@gurdy/cli-<os>-<arch>`
+packages are easy to miss since nobody installs them directly. Fixed
+and re-run on the same release event — no new tag, no burned version.
+
+Three files still said `brew install gurdyai/tap/gurdy`, including
+`install.sh`'s own recommendation, pointing macOS users at a tap that
+does not exist. They survived the org move because the sweep that
+cleared it matched `GurdyAI` case-sensitively and these are lowercase.
+
+**homebrew-core is now a decided non-goal** (§5.8). Notability is the
+reachable objection; the permanent one is that a core formula builds
+from source, so Homebrew would ship a bottle it compiled and the
+installed artifact would not be the one we signed — which voids the
+README's cosign step and makes the reproducibility gate describe
+something nobody runs. The tap is not a waiting room.
+
+Every install path was exercised against the published release rather
+than trusted from the workflow: `install.sh` into a scratch
+`GURDY_BIN_DIR`, `pip install gurdy` (binaries on PATH *and* `import
+gurdy`), `npm i -g @gurdy/cli` (two packages, so the os/cpu gating
+holds), and a checksum agreeing across `checksums.txt`, a local
+recompute, and the cask.
+
+---
+
 ## 2026-09-30 — enforce never reached a host; the test that knew was skipping
 
 `govern._decide` wrote the frame, closed the child's stdin, then called
